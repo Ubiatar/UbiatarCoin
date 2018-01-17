@@ -1,0 +1,50 @@
+{
+  "name": "ubiatarcoin",
+  "version": "1.0.0",
+  "description": "Ubiatarplay ICO smart contracts",
+  "main": "index.js",
+  "scripts": {
+    "init": "truffle.cmd init"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ubiatar/UbiatarCoin.git"
+  },
+  "keywords": [
+    "ubiatar",
+    "ubiatarplay",
+    "ICO",
+    "ubiatarcoin",
+    "ethereum",
+    "smart",
+    "contract"
+  ],
+  "author": "fabiopadoin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Ubiatar/UbiatarCoin/issues"
+  },
+  "homepage": "https://github.com/Ubiatar/UbiatarCoin#readme",
+
+  "dependencies": {
+    "bluebird": "3.5.1",
+    "ethereumjs-wallet": "^0.6.0",
+    "truffle-contract": "2.0.5",
+    "truffle-hdwallet-provider": "0.0.3",
+    "web3": "^0.18.4",
+    "web3-provider-engine": "^8.6.1",
+    "zeppelin-solidity": "^1.3.0"
+  },
+
+  "devDependencies": {
+    "bip39": "2.3.0",
+    "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
+    "ethereumjs-testrpc": "2.2.7",
+    "ganache-cli": "^6.0.3",
+    "lodash": "^4.17.4",
+    "mocha": "3.5.3",
+    "rimraf": "^2.6.2",
+    "truffle": "4.0.0-beta.2"
+  }
+}
