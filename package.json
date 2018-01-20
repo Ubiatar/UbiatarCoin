@@ -4,7 +4,10 @@
   "description": "Ubiatarplay ICO smart contracts",
   "main": "index.js",
   "scripts": {
-    "init": "truffle.cmd init"
+    "init": "truffle.cmd init",
+    "test": "mocha test/Owned.js",
+    "win_deploy": "truffle.cmd deploy",
+    "win_compile": "rimraf build && truffle.cmd compile"
   },
   "repository": {
     "type": "git",

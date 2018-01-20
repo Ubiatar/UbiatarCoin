@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.17;
 
 import "./Owned.sol";
 import "./SafeMath.sol";
@@ -105,7 +105,7 @@ contract UbiatarCoin is Owned, ERC20Interface{
      public
      returns (bool success)
      {
-         require(balance[from] >= tokens);
+         require(balances[from] >= tokens);
          require(allowed[from][msg.sender] >= tokens);
          balances[from] = balances[from].sub(tokens);
          allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
