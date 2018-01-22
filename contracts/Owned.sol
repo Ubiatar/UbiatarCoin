@@ -1,4 +1,4 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.18;
 
 
 contract Owned {
@@ -16,6 +16,7 @@ contract Owned {
     }
 
     function setCandidate (address newOwner)
+    public
     onlyOwner
     returns (bool success)
     {
@@ -26,6 +27,7 @@ contract Owned {
     }
 
     function getOwnership ()
+    public
     onlyCandidate
     returns (bool success)
     {

@@ -6,8 +6,8 @@
   "scripts": {
     "init": "truffle.cmd init",
     "test": "mocha test/Owned.js",
-    "win_deploy": "truffle.cmd deploy",
-    "win_compile": "rimraf build && truffle.cmd compile"
+    "deploy": "truffle deploy",
+    "compile": "rimraf build && truffle compile"
   },
   "repository": {
     "type": "git",
@@ -28,7 +28,6 @@
     "url": "https://github.com/Ubiatar/UbiatarCoin/issues"
   },
   "homepage": "https://github.com/Ubiatar/UbiatarCoin#readme",
-
   "dependencies": {
     "bluebird": "3.5.1",
     "ethereumjs-wallet": "^0.6.0",
@@ -38,7 +37,6 @@
     "web3-provider-engine": "^8.6.1",
     "zeppelin-solidity": "^1.3.0"
   },
-
   "devDependencies": {
     "bip39": "2.3.0",
     "chai": "^4.1.2",
@@ -48,6 +46,6 @@
     "lodash": "^4.17.4",
     "mocha": "3.5.3",
     "rimraf": "^2.6.2",
-    "truffle": "4.0.0-beta.2"
+    "truffle": "4.0.5"
   }
 }
