@@ -5,9 +5,11 @@
   "main": "index.js",
   "scripts": {
     "init": "truffle.cmd init",
-    "test": "mocha test/Owned.js",
+    "test owned": "mocha test/Owned.js",
+    "test preSaleVesting": "mocha test/PreSaleVesting.js",
     "deploy": "truffle deploy",
-    "compile": "rimraf build && truffle compile"
+    "compile": "rimraf build && truffle compile",
+    "test all": "truffle test"
   },
   "repository": {
     "type": "git",
@@ -29,6 +31,7 @@
   },
   "homepage": "https://github.com/Ubiatar/UbiatarCoin#readme",
   "dependencies": {
+    "bignumber.js": "^6.0.0",
     "bluebird": "3.5.1",
     "ethereumjs-wallet": "^0.6.0",
     "truffle-contract": "2.0.5",
@@ -42,7 +45,7 @@
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "ethereumjs-testrpc": "2.2.7",
-    "ganache-cli": "^6.0.3",
+    "ganache-cli": "^6.1.0-beta.0",
     "lodash": "^4.17.4",
     "mocha": "3.5.3",
     "rimraf": "^2.6.2",
