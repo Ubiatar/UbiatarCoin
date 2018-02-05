@@ -1,14 +1,15 @@
 pragma solidity ^0.4.18;
 
 import "./SafeMath.sol";
-import "./Uac.sol";
+import "./UAC.sol";
+import "./Owned.sol";
 
 
-contract FoundersVesting {
+contract FoundersVesting is Owned{
 
     using SafeMath for uint;
 
-    address public creator;
+    address public owner;
     address public teamAccountAddress;
     uint64 public lastWithdrawTime;
 
@@ -17,21 +18,26 @@ contract FoundersVesting {
 
     UAC public uacToken;
 
-    function FoundersVesting(address _teamAccountAddress,address _uacTokenAddress){
+    function FoundersVesting(address _teamAccountAddress, address _uacTokenAddress)
+    {
         teamAccountAddress = _teamAccountAddress;
         lastWithdrawTime = uint64(now);
 
         uacToken = UAC(_uacTokenAddress);
 
-        creator = msg.sender;
+        owner = msg.sender;
     }
 
-    modifier onlyCreator() {
-        require(msg.sender==creator);
+    modifier onlyOwner()
+    {
+        require(msg.sender == owner);
         _;
     }
 
-    function withdrawTokens() onlyCreator public {
+    function withdrawTokens()
+    onlyOwner
+    public
+    {
         // 1 - wait for the next month
         uint64 oneMonth = lastWithdrawTime + 30 days;
         require(uint(now) >= oneMonth);

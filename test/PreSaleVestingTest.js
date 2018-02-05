@@ -25,12 +25,12 @@ const should = chai.should()
 const truffleContract = require("truffle-contract")
 
 const SafeMath = truffleContract(require(__dirname + "/../build/contracts/SafeMath.json"))
-const PreSaleVesting = truffleContract(require(__dirname + "/../build/contracts/PreSaleVesting.json"))
+const PreSaleVestingTest = truffleContract(require(__dirname + "/../build/contracts/PreSaleVestingTest.json"))
 const UAC = truffleContract(require(__dirname + "/../build/contracts/UAC.json"))
 const StdToken = truffleContract(require(__dirname + "/../build/contracts/StdToken.json"))
 SafeMath.setProvider(web3.currentProvider)
 StdToken.setProvider(web3.currentProvider)
-PreSaleVesting.setProvider(web3.currentProvider)
+PreSaleVestingTest.setProvider(web3.currentProvider)
 UAC.setProvider(web3.currentProvider)
 
 
@@ -77,7 +77,7 @@ describe("PreSaleVesting tests", () => {
             .then(() => web3.version.getNetworkPromise())
             .then(_networkId => {
                 networkId = _networkId
-                PreSaleVesting.setNetwork(networkId)
+                PreSaleVestingTest.setNetwork(networkId)
                 owner = accounts[0]
                 user = accounts[1]
                 investor = "0x7fe01ff0aDaF111A94ad0d69eD27cDe23553AF44";
@@ -98,11 +98,11 @@ describe("PreSaleVesting tests", () => {
     before("deploy SafeMath", () => {
         return SafeMath.new({from: owner})
             .then(_safeMath => safeMath = _safeMath)
-            .then(() => PreSaleVesting.link({SafeMath: safeMath.address}))
+            .then(() => PreSaleVestingTest.link({SafeMath: safeMath.address}))
     })
 
     const preSaleVestingDeploy = (uacAddress) => {
-        return PreSaleVesting.new(uacAddress, {from: owner})
+        return PreSaleVestingTest.new(uacAddress, {from: owner})
             .then(_preSaleVesting => preSaleVesting = _preSaleVesting)
     }
 
@@ -192,7 +192,7 @@ describe("PreSaleVesting tests", () => {
             .then(() => increaseTime(307))
             .then(() => preSaleVesting.getInitialBalance(investor, {from: investor}))
             .then((balance) => {
-                  return preSaleVesting.getReclaimableTokens(investor, {from: investor})
+                return preSaleVesting.getReclaimableTokens(investor, {from: investor})
                     .then(tokens => assert.strictEqual(tokens.toString(10), balance.toFixed(0), "should be equal"))
             })
     })

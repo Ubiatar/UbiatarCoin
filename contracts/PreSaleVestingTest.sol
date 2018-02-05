@@ -5,8 +5,8 @@ pragma solidity ^0.4.18;
 import "./SafeMath.sol";
 import "./UAC.sol";
 
-// Might need to modify this contract with a callable function to start the timers for the thresholds
-contract PreSaleVesting
+
+contract PreSaleVestingTest
 {
 
     using SafeMath for uint;
@@ -28,18 +28,17 @@ contract PreSaleVesting
 
     UAC public uacToken;
 
-    function PreSaleVesting(address _uacTokenAddress)
+    function PreSaleVestingTest(address _uacTokenAddress)
     {
         require(_uacTokenAddress != 0x0);
         investors[address(0x7fe01ff0aDaF111A94ad0d69eD27cDe23553AF44)].initialBalance = 266955000000000513888375;
         investors[address(0x7fe01ff0aDaF111A94ad0d69eD27cDe23553AF44)].balance = 266955000000000513888375;
         investors[address(0x7fe01ff0aDaF111A94ad0d69eD27cDe23553AF44)].lastWithdrawTime = uint(now).add(127 days);
         investors[address(0x7fe01ff0aDaF111A94ad0d69eD27cDe23553AF44)].firstWithdraw = 1;
-        investors[address(0x744e25EdCFF3A6620aF9BB3559Cc02f4e81C909c)].initialBalance = 716690000000001379628250;
-        investors[address(0x744e25EdCFF3A6620aF9BB3559Cc02f4e81C909c)].balance = 716690000000001379628250;
-        investors[address(0x744e25EdCFF3A6620aF9BB3559Cc02f4e81C909c)].lastWithdrawTime = uint(now).add(127 days);
-        investors[address(0x744e25EdCFF3A6620aF9BB3559Cc02f4e81C909c)].firstWithdraw = 1;
-
+        investors[address(0x48c04d07Ed26C38198A2411982D046d3CF952c5D)].initialBalance = 12025000000000023148125;
+        investors[address(0x48c04d07Ed26C38198A2411982D046d3CF952c5D)].balance = 12025000000000023148125;
+        investors[address(0x48c04d07Ed26C38198A2411982D046d3CF952c5D)].lastWithdrawTime = uint(now).add(127 days);
+        investors[address(0x48c04d07Ed26C38198A2411982D046d3CF952c5D)].firstWithdraw = 1;
         // Set all addresses with initialBalance from PreSale lastWithdrawTime = uint64(now), firstWithdraw = 1
 
         uacToken = UAC(_uacTokenAddress);
@@ -78,6 +77,15 @@ contract PreSaleVesting
         uacToken.transfer(msg.sender, amountToSend);
 
         amountToSend = 0;
+    }
+
+    function newInvestor(uint balance)
+    public
+    {
+        investors[address(msg.sender)].initialBalance = balance;
+        investors[address(msg.sender)].balance = balance;
+        investors[address(msg.sender)].lastWithdrawTime = uint(now).add(127 days);
+        investors[address(msg.sender)].firstWithdraw = 1;
     }
 
     function getInitialBalance(address user)

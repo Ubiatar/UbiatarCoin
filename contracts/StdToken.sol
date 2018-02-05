@@ -17,8 +17,17 @@ contract StdToken {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
+    modifier onlyPayloadSize(uint _size)
+    {
+        require(msg.data.length >= _size + 4);
+        _;
+    }
+
     // Functions:
-    function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) returns(bool){
+    function transfer(address _to, uint256 _value)
+    onlyPayloadSize(2 * 32)
+    returns(bool)
+    {
         require(balances[msg.sender] >= _value);
         require(balances[_to] + _value > balances[_to]);
 
@@ -29,7 +38,9 @@ contract StdToken {
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns(bool){
+    function transferFrom(address _from, address _to, uint256 _value)
+    returns(bool)
+    {
         require(balances[_from] >= _value);
         require(allowed[_from][msg.sender] >= _value);
         require(balances[_to] + _value > balances[_to]);
@@ -42,11 +53,16 @@ contract StdToken {
         return true;
     }
 
-    function balanceOf(address _owner) constant returns (uint256) {
+    function balanceOf(address _owner)
+    constant
+    returns (uint256)
+    {
         return balances[_owner];
     }
 
-    function approve(address _spender, uint256 _value) returns (bool) {
+    function approve(address _spender, uint256 _value)
+    returns (bool)
+    {
         // To change the approve amount you first have to reduce the addresses`
         //  allowance to zero by calling `approve(_spender, 0)` if it is not
         //  already 0 to mitigate the race condition described here:
@@ -58,12 +74,10 @@ contract StdToken {
         return true;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256) {
+    function allowance(address _owner, address _spender)
+    constant
+    returns (uint256)
+    {
         return allowed[_owner][_spender];
-    }
-
-    modifier onlyPayloadSize(uint _size) {
-        require(msg.data.length >= _size + 4);
-        _;
     }
 }
