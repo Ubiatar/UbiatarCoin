@@ -4,6 +4,7 @@ import "./SafeMath.sol";
 import "./UAC.sol";
 import "./UACUnsold.sol";
 import "./Owned.sol";
+import "./PreSaleVesting.sol";
 
 // This is the main UbiatarCoin ICO smart contract
 contract ICO is Owned {
@@ -12,31 +13,28 @@ contract ICO is Owned {
 
     address[] public multisigs;
 
-    // We count ETH invested by person,
-    //Might not need it
+    // Counts ETH invested by person, we might not need it
     mapping(address => uint) ethInvestedBy;
     uint collectedWei = 0;
-
-    // These can be changed before ICO starts
-    // uint constant STD_PRICE_USD_PER_1000_TOKENS = 7000;
 
     // Standard token price is 2 dollars per token
     uint public usdTokenPrice = 2;
 
-    // The USD change rate can be changed every hour
+    // The USD/ETH
     // UPDATE CHANGE RATE WITH CURRENT RATE WHEN DEPLOYING
     uint public usdPerEth = 1100;
 
-    // 2 000 000 tokens
+    // Founders reward
     uint public constant FOUNDERS_REWARD = 2000000 * 1 ether;
     // Tokens bought in PreSale
     uint public constant PRESALE_REWARD = 17584778551358900100698693;
-    // 15 000 000 is sold during the ICO
+    // 15 000 000 tokens sold during the ICO
     uint public constant ICO_TOKEN_SUPPLY_LIMIT = 15000000 * 1 ether;
 
     // Fields:
     address public owner = 0x0;
 
+    // Test block number from which Ico will start, to be updated with real value
     uint public icoBlockNumberStart = 5305785;
 
     address public toBeRefund = 0x0;
@@ -55,6 +53,8 @@ contract ICO is Owned {
     UAC public uacToken;
 
     UACUnsold public unsoldContract;
+
+    PreSaleVesting public preSaleVesting;
 
     enum State
     {
@@ -110,6 +110,7 @@ contract ICO is Owned {
 
         uacToken = UAC(_uacTokenAddress);
         unsoldContract = UACUnsold(_unsoldContractAddress);
+        preSaleVesting = PreSaleVesting(_preSaleVestingAddress);
 
         // slight rename
         foundersRewardsAccount = _foundersVestingAddress;
@@ -144,7 +145,7 @@ contract ICO is Owned {
         setState(State.ICORunning);
     }
 
-    /// @dev This function can be called by owner at any time,
+    /// This function can be called by owner at any time
     function finishICO()
     public
     onlyOwner
@@ -160,6 +161,8 @@ contract ICO is Owned {
         if (icoTokensUnsold > 0) {
             uacToken.issueTokens(unsoldContract, icoTokensUnsold);
         }
+
+        preSaleVesting.icoFinished();
 
         // Should be changed to our desired method of storing ether
         // 3 - send all ETH to multisigs
@@ -226,7 +229,6 @@ contract ICO is Owned {
 
             issueTokensInternal(_buyer, newTokens);
 
-            // Update this only when buying from ETH
             ethInvestedBy[_buyer] = ethInvestedBy[_buyer].add(_refundAmount);
 
             // This is total collected ETH
@@ -298,11 +300,7 @@ contract ICO is Owned {
     {
         return uacToken.balanceOf(_of);
     }
-    /*
-        function getCurrentPrice()constant public returns (uint){
-            return getUacTokensPerEth();
-        }
-    */
+
     function getTotalCollectedWei()
     constant
     public
@@ -323,11 +321,7 @@ contract ICO is Owned {
     constant
     returns (uint)
     {
-        // Discount to be applied, should be changed to something useful
-        uint discountPercent = 0;
-
-        uint tokenPrice = (usdTokenPrice * 100) / (100 + discountPercent);
-        uint uacPerEth = (usdPerEth * 1 ether * 1 ether) / tokenPrice;
+        uint uacPerEth = (usdPerEth * 1 ether * 1 ether) / usdTokenPrice;
         return uacPerEth;
     }
 

@@ -25,6 +25,7 @@ contract StdToken {
 
     // Functions:
     function transfer(address _to, uint256 _value)
+    public
     onlyPayloadSize(2 * 32)
     returns(bool)
     {
@@ -39,6 +40,7 @@ contract StdToken {
     }
 
     function transferFrom(address _from, address _to, uint256 _value)
+    public
     returns(bool)
     {
         require(balances[_from] >= _value);
@@ -54,6 +56,7 @@ contract StdToken {
     }
 
     function balanceOf(address _owner)
+    public
     constant
     returns (uint256)
     {
@@ -61,6 +64,7 @@ contract StdToken {
     }
 
     function approve(address _spender, uint256 _value)
+    public
     returns (bool)
     {
         // To change the approve amount you first have to reduce the addresses`
@@ -75,6 +79,7 @@ contract StdToken {
     }
 
     function allowance(address _owner, address _spender)
+    public
     constant
     returns (uint256)
     {

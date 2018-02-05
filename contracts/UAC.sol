@@ -37,6 +37,7 @@ contract UAC is StdToken, Owned
 
     // Setters/Getters
     function setIcoContractAddress(address _icoContractAddress)
+    public
     onlyOwner
     {
         icoContractAddress = _icoContractAddress;
