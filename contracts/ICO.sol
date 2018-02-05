@@ -63,13 +63,7 @@ contract ICO is Owned{
 
         // Collected ETH is transferred to multisigs.
         // Unsold tokens transferred to UACUnsold contract.
-        ICOFinished,
-
-        // In this state we lock all UAC tokens forever.
-        //
-        // There is no any possibility to transfer tokens
-        // There is no any possibility to move back
-        Migrating
+        ICOFinished
     }
     State public currentState = State.Init;
 
@@ -144,18 +138,6 @@ contract ICO is Owned{
     onlyInState(State.ICOPaused)
     {
         setState(State.ICORunning);
-    }
-
-    function startMigration()
-    public
-    onlyOwner
-    onlyInState(State.ICOFinished)
-    {
-        // there is no way back...
-        setState(State.Migrating);
-
-        // disable token transfers
-        uacToken.lockTransfer(true);
     }
 
     /// @dev This function can be called by owner at any time,
