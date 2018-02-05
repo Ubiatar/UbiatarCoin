@@ -41,6 +41,10 @@ contract ICO is Owned{
 
     uint public icoBlockNumberStart = 5305785;
 
+    address public toBeRefund = 0x0;
+
+    uint public refundAmount;
+
     UAC public uacToken;
 
     UACUnsold public unsoldContract;
@@ -91,6 +95,8 @@ contract ICO is Owned{
     event LogBuy(address indexed owner, uint value);
     event LogBurn(address indexed owner, uint value);
     event LogWithdraw(address to, uint value);
+    event LogOverflow(address to, uint value);
+    event LogRefund(address to, uint value);
 
     // Functions:
     /// @dev Constructor
@@ -256,6 +262,19 @@ contract ICO is Owned{
         return uacPerEth;
     }*/
 
+    function refund ()
+    onlyOwner
+    {
+        require(toBeRefund != 0x0);
+        require(refundAmount > 0);
+        uint _refundAmount = refundAmount;
+        address _toBeRefund = toBeRefund;
+        refundAmount = 0;
+        toBeRefund = 0x0;
+        _toBeRefund.transfer(_refundAmount);
+        LogRefund(_toBeRefund, _refundAmount);
+    }
+
     function getUacTokensPerEth()
     constant
     returns (uint)
@@ -275,17 +294,37 @@ contract ICO is Owned{
     onlyInState(State.ICORunning)
     onlyAfterBlockNumber
     {
-        require(msg.value!=0);
+        require(msg.value >= 100 finney);
 
         uint newTokens = (msg.value * getUacTokensPerEth()) / 1 ether;
 
-        issueTokensInternal(_buyer,newTokens);
+        if((icoTokensSold + newTokens) <= ICO_TOKEN_SUPPLY_LIMIT)
+        {
+            issueTokensInternal(_buyer,newTokens);
 
-        // Update this only when buying from ETH
-        ethInvestedBy[msg.sender] = ethInvestedBy[msg.sender].add(msg.value);
+            // Update this only when buying from ETH
+            ethInvestedBy[_buyer] = ethInvestedBy[_buyer].add(msg.value);
 
-        // This is total collected ETH
-        collectedWei = collectedWei.add(msg.value);
+            // This is total collected ETH
+            collectedWei = collectedWei.add(msg.value);
+        }
+        else
+        {
+            newTokens = ICO_TOKEN_SUPPLY_LIMIT.sub(icoTokensSold);
+            uint _refundAmount = msg.value.sub(newTokens.div(getUacTokensPerEth()).div(1 ether));
+            require(_refundAmount < msg.value);
+            refundAmount = _refundAmount;
+            toBeRefund = _buyer;
+            LogOverflow(_buyer, _refundAmount);
+
+            issueTokensInternal(_buyer,newTokens);
+
+            // Update this only when buying from ETH
+            ethInvestedBy[_buyer] = ethInvestedBy[_buyer].add(_refundAmount);
+
+            // This is total collected ETH
+            collectedWei = collectedWei.add(_refundAmount);
+        }
     }
 
     function issueTokensInternal(address _to, uint _tokens)
@@ -303,7 +342,6 @@ contract ICO is Owned{
     public
     onlyOwner
     {
-        // 1 - update
         usdPerEth = _usdPerEthRate;
     }
 
