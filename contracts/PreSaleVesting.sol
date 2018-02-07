@@ -30,10 +30,9 @@ contract PreSaleVesting is Owned
 
     UAC public uacToken;
 
-    function PreSaleVesting(address _uacTokenAddress, address _icoContractAddress)
+    function PreSaleVesting(address _uacTokenAddress)
     {
         require(_uacTokenAddress != 0x0);
-        require(_icoContractAddress != 0x0);
 
         investors[address(0x7fe01ff0aDaF111A94ad0d69eD27cDe23553AF44)].initialBalance = 266955000000000513888375;
         investors[address(0xBEED6764508667b0dA60BA354F5BE2d34797AeA3)].initialBalance = 12025000000000023148125;

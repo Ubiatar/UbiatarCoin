@@ -17,12 +17,13 @@ contract ICO is Owned {
     mapping(address => uint) ethInvestedBy;
     uint collectedWei = 0;
 
-    // Standard token price is 2 dollars per token
-    uint public usdTokenPrice = 2;
+    // Standard token price is 200 dollar CENTS per token
+    uint public usdTokenPrice = 2 * 100;
 
     // The USD/ETH
     // UPDATE CHANGE RATE WITH CURRENT RATE WHEN DEPLOYING
-    uint public usdPerEth = 1100;
+    // This value is given in dollar CENTS
+    uint public usdPerEth = 1100 * 100;
 
     // Founders reward
     uint public constant FOUNDERS_REWARD = 2000000 * 1 ether;
@@ -34,7 +35,7 @@ contract ICO is Owned {
     // Fields:
     address public owner = 0x0;
 
-    // Test block number from which Ico will start, to be updated with real value
+    // Test block number from which Ico will start, to be updated with real value before ICO start
     uint public icoBlockNumberStart = 5305785;
 
     address public toBeRefund = 0x0;
@@ -67,6 +68,7 @@ contract ICO is Owned {
         // Unsold tokens transferred to UACUnsold contract.
         ICOFinished
     }
+
     State public currentState = State.Init;
 
     // Modifiers:
@@ -208,32 +210,32 @@ contract ICO is Owned {
 
         uint newTokens = (msg.value * getUacTokensPerEth()) / 1 ether;
 
-        if ((icoTokensSold + newTokens) <= ICO_TOKEN_SUPPLY_LIMIT)
-        {
-            issueTokensInternal(_buyer, newTokens);
+          if ((icoTokensSold + newTokens) <= ICO_TOKEN_SUPPLY_LIMIT)
+          {
+              issueTokensInternal(_buyer, newTokens);
 
-            // Update this only when buying from ETH
-            ethInvestedBy[_buyer] = ethInvestedBy[_buyer].add(msg.value);
+              // Update this only when buying from ETH
+              ethInvestedBy[_buyer] = ethInvestedBy[_buyer].add(msg.value);
 
-            // This is total collected ETH
-            collectedWei = collectedWei.add(msg.value);
-        }
-        else
-        {
-            newTokens = ICO_TOKEN_SUPPLY_LIMIT.sub(icoTokensSold);
-            uint _refundAmount = msg.value.sub(newTokens.div(getUacTokensPerEth()).div(1 ether));
-            require(_refundAmount < msg.value);
-            refundAmount = _refundAmount;
-            toBeRefund = _buyer;
-            LogOverflow(_buyer, _refundAmount);
+              // This is total collected ETH
+              collectedWei = collectedWei.add(msg.value);
+          }
+          else
+          {
+              uint tokensBought = ICO_TOKEN_SUPPLY_LIMIT.sub(icoTokensSold);
+              uint _refundAmount = msg.value.sub((tokensBought.div(getUacTokensPerEth())).div(1 ether));
+              require(_refundAmount < msg.value);
+              refundAmount = _refundAmount;
+              toBeRefund = _buyer;
+              LogOverflow(_buyer, _refundAmount);
 
-            issueTokensInternal(_buyer, newTokens);
+              issueTokensInternal(_buyer, tokensBought);
 
-            ethInvestedBy[_buyer] = ethInvestedBy[_buyer].add(_refundAmount);
+              ethInvestedBy[_buyer] = ethInvestedBy[_buyer].add(_refundAmount);
 
-            // This is total collected ETH
-            collectedWei = collectedWei.add(_refundAmount);
-        }
+              // This is total collected ETH
+              collectedWei = collectedWei.add(_refundAmount);
+          }
     }
 
     function issueTokensInternal(address _to, uint _tokens)
@@ -309,6 +311,14 @@ contract ICO is Owned {
         return collectedWei;
     }
 
+    function isIcoRunning()
+    constant
+    public
+    returns (bool)
+    {
+        return (currentState == State.ICORunning);
+    }
+
     function isIcoFinished()
     constant
     public
@@ -321,7 +331,7 @@ contract ICO is Owned {
     constant
     returns (uint)
     {
-        uint uacPerEth = (usdPerEth * 1 ether * 1 ether) / usdTokenPrice;
+        uint uacPerEth = (usdPerEth * 1 ether) / usdTokenPrice;
         return uacPerEth;
     }
 
