@@ -1,10 +1,21 @@
 pragma solidity ^0.4.18;
 
 import "./SafeMath.sol";
-import "./UAC.sol";
-import "./UACUnsold.sol";
 import "./Owned.sol";
-import "./PreSaleVesting.sol";
+
+contract UAC {
+    function lockTransfer(bool _lock);
+    function issueTokens(address _who, uint _tokens);
+    function balanceOf(address _owner) public  constant  returns (uint256);
+}
+
+contract PreSaleVesting {
+    function icoFinished();
+}
+
+contract FoundersVesting {
+
+}
 
 // This is the main UbiatarCoin ICO smart contract
 contract ICO is Owned {
@@ -33,10 +44,12 @@ contract ICO is Owned {
     uint public constant ICO_TOKEN_SUPPLY_LIMIT = 15000000 * 1 ether;
 
     // Fields:
-    address public owner = 0x0;
 
-    // Test block number from which Ico will start, to be updated with real value before ICO start
+    // Test block number from which Ico will start, to be updated with real value before ICO starts
     uint public icoBlockNumberStart = 5305785;
+
+    // Test time in epoch time when Ico will finish, to be updated with real value before ICO starts
+    uint public icoFinishTime = 1524488400;
 
     address public toBeRefund = 0x0;
 
@@ -47,15 +60,19 @@ contract ICO is Owned {
     // Total amount of tokens sent to UACUnsold contract after ICO is finished
     uint public icoTokensUnsold = 0;
     // This is where FOUNDERS_REWARD will be allocated
-    address public foundersRewardsAccount = 0x0;
+    address public foundersVestingAddress = 0x0;
     // This is where PRESALE_REWARD will be allocated
-    address public preSaleRewardsAccount = 0x0;
+    address public preSaleVestingAddress = 0x0;
+
+    address public uacTokenAddress = 0x0;
+
+    address public unsoldContractAddress = 0x0;
 
     UAC public uacToken;
 
-    UACUnsold public unsoldContract;
-
     PreSaleVesting public preSaleVesting;
+
+    FoundersVesting public foundersVesting;
 
     enum State
     {
@@ -72,12 +89,6 @@ contract ICO is Owned {
     State public currentState = State.Init;
 
     // Modifiers:
-    modifier onlyOwner()
-    {
-        require(msg.sender == owner);
-        _;
-    }
-
     modifier onlyInState(State state)
     {
         require(state == currentState);
@@ -87,6 +98,18 @@ contract ICO is Owned {
     modifier onlyAfterBlockNumber()
     {
         require(block.number >= icoBlockNumberStart);
+        _;
+    }
+
+    modifier onlyBeforeIcoFinishTime()
+    {
+        require(uint(now) <= icoFinishTime);
+        _;
+    }
+
+    modifier canFinishICO()
+    {
+        require((uint(now) >= icoFinishTime) || (icoTokensSold == ICO_TOKEN_SUPPLY_LIMIT));
         _;
     }
 
@@ -108,16 +131,14 @@ contract ICO is Owned {
         address _preSaleVestingAddress
     )
     {
-        owner = msg.sender;
-
         uacToken = UAC(_uacTokenAddress);
-        unsoldContract = UACUnsold(_unsoldContractAddress);
         preSaleVesting = PreSaleVesting(_preSaleVestingAddress);
+        foundersVesting = FoundersVesting(_foundersVestingAddress);
 
-        // slight rename
-        foundersRewardsAccount = _foundersVestingAddress;
-
-        preSaleRewardsAccount = _preSaleVestingAddress;
+        uacTokenAddress = _uacTokenAddress;
+        unsoldContractAddress = _unsoldContractAddress;
+        foundersVestingAddress = _foundersVestingAddress;
+        preSaleVestingAddress = _preSaleVestingAddress;
     }
 
     function startICO()
@@ -127,8 +148,8 @@ contract ICO is Owned {
     {
         setState(State.ICORunning);
         uacToken.lockTransfer(true);
-        uacToken.issueTokens(foundersRewardsAccount, FOUNDERS_REWARD);
-        uacToken.issueTokens(preSaleRewardsAccount, PRESALE_REWARD);
+        uacToken.issueTokens(foundersVestingAddress, FOUNDERS_REWARD);
+        uacToken.issueTokens(preSaleVestingAddress, PRESALE_REWARD);
     }
 
     function pauseICO()
@@ -151,6 +172,7 @@ contract ICO is Owned {
     function finishICO()
     public
     onlyOwner
+    canFinishICO
     onlyInState(State.ICORunning)
     {
         setState(State.ICOFinished);
@@ -161,7 +183,7 @@ contract ICO is Owned {
         // 2 - move all unsold tokens to unsoldTokens contract
         icoTokensUnsold = ICO_TOKEN_SUPPLY_LIMIT.sub(icoTokensSold);
         if (icoTokensUnsold > 0) {
-            uacToken.issueTokens(unsoldContract, icoTokensUnsold);
+            uacToken.issueTokens(unsoldContractAddress, icoTokensUnsold);
         }
 
         preSaleVesting.icoFinished();
@@ -169,7 +191,7 @@ contract ICO is Owned {
         // Should be changed to our desired method of storing ether
         // 3 - send all ETH to multisigs
         // we have N separate multisigs for extra security
-        uint sendThisAmount = (this.balance / 10);
+    /*    uint sendThisAmount = (this.balance / 10);
 
         // 3.1 - send to 9 multisigs
         for (uint i = 0; i < 9; ++i) {
@@ -185,6 +207,7 @@ contract ICO is Owned {
             address lastMs = multisigs[9];
             lastMs.transfer(this.balance);
         }
+        */
     }
 
     function refund()
@@ -204,6 +227,7 @@ contract ICO is Owned {
     public
     payable
     onlyInState(State.ICORunning)
+    onlyBeforeIcoFinishTime
     onlyAfterBlockNumber
     {
         require(msg.value >= 100 finney);
@@ -223,7 +247,7 @@ contract ICO is Owned {
           else
           {
               uint tokensBought = ICO_TOKEN_SUPPLY_LIMIT.sub(icoTokensSold);
-              uint _refundAmount = msg.value.sub((tokensBought.div(getUacTokensPerEth())).div(1 ether));
+              uint _refundAmount = msg.value.sub((tokensBought.div(getUacTokensPerEth())).mul(1 ether));
               require(_refundAmount < msg.value);
               refundAmount = _refundAmount;
               toBeRefund = _buyer;
@@ -251,10 +275,47 @@ contract ICO is Owned {
 
     //Setters
 
+    function setUacTokenAddress(address _uacTokenAddress)
+    onlyOwner
+    onlyInState(State.Init)
+    {
+        uacTokenAddress = _uacTokenAddress;
+        uacToken = UAC(_uacTokenAddress);
+    }
+
+    function setUnsoldContractAddress(address _unsoldContractAddress)
+    onlyOwner
+    onlyInState(State.Init)
+    {
+        unsoldContractAddress = _unsoldContractAddress;
+    }
+
+    function setFoundersVestingAddress(address _foundersVestingAddress)
+    onlyOwner
+    onlyInState(State.Init)
+    {
+        foundersVestingAddress = _foundersVestingAddress;
+        foundersVesting = FoundersVesting(_foundersVestingAddress);
+    }
+
+    function setPreSaleVestingAddress(address _preSaleVestingAddress)
+    onlyOwner
+    onlyInState(State.Init)
+    {
+        preSaleVestingAddress = _preSaleVestingAddress;
+        preSaleVesting = PreSaleVesting(_preSaleVestingAddress);
+    }
+
     function setBlockNumberStart(uint _blockNumber)
     onlyOwner
     {
         icoBlockNumberStart = _blockNumber;
+    }
+
+    function setIcoFinishTime(uint _time)
+    onlyOwner
+    {
+        icoFinishTime = _time;
     }
 
     function setUsdPerEthRate(uint _usdPerEthRate)

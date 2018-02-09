@@ -9,7 +9,7 @@ contract UAC {
     function transfer(address _to, uint256 _value) public returns(bool);
 }
 
-contract PreSaleVesting is Owned
+contract PreSaleVestingTest is Owned
 {
 
     using SafeMath for uint;
@@ -34,7 +34,7 @@ contract PreSaleVesting is Owned
 
     UAC public uacToken;
 
-    function PreSaleVesting(address _uacTokenAddress)
+    function PreSaleVestingTest(address _uacTokenAddress)
     {
         require(_uacTokenAddress != 0x0);
 
@@ -253,6 +253,12 @@ contract PreSaleVesting is Owned
 
             lockedTokens = investors[user].balance - reclaimableTokens;
         }
+    }
+
+    function addNewInvestor(address _address, uint _initialBalance)
+    onlyOwner
+    {
+        investors[_address].initialBalance = _initialBalance;
     }
 
     // Do not allow to send money directly to this contract
