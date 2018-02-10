@@ -13,7 +13,6 @@ contract UAC is StdToken, Owned
     string public constant symbol = "UAC";
     uint public constant decimals = 18;
 
-    address public owner = 0x0;
     address public icoContractAddress = 0x0;
     bool public lockTransfers = false;
 
@@ -23,11 +22,6 @@ contract UAC is StdToken, Owned
     uint public constant TOTAL_PRESALE_SUPPLY = 17584778551358900100698693;
 
     /// Modifiers:
-    modifier onlyOwner()
-    {
-        require(msg.sender == owner);
-        _;
-    }
 
     modifier byIcoContract()
     {
@@ -46,8 +40,6 @@ contract UAC is StdToken, Owned
     // Functions:
     function UAC()
     {
-        owner = msg.sender;
-
         assert(TOTAL_TOKEN_SUPPLY == 35584778551358900100698693);
     }
 

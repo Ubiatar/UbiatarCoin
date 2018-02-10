@@ -3,7 +3,6 @@ pragma solidity ^0.4.18;
 import "./SafeMath.sol";
 
 // ERC20 standard
-// We don't use ERC23 standard
 contract StdToken {
 
     using SafeMath for uint;

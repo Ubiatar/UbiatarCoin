@@ -75,12 +75,12 @@ const increaseTime = (days) => {
 }
 
 const mineBlock = () => {
-        return web3.currentProvider.sendAsyncPromise({
-            jsonrpc: "2.0",
-            method: "evm_mine",
-            params: [],
-            id: 0
-        })
+    return web3.currentProvider.sendAsyncPromise({
+        jsonrpc: "2.0",
+        method: "evm_mine",
+        params: [],
+        id: 0
+    })
 }
 
 
@@ -136,16 +136,11 @@ describe("ICO tests", () => {
     beforeEach("deploy UAC", () => {
         return UAC.new({from: owner})
             .then(_uac => uac = _uac)
-            .then(() => ICO.link({UAC: uac.address}))
-            .then(() => UACUnsold.link({UAC: uac.address}))
-            .then(() => FoundersVesting.link({UAC: uac.address}))
-            .then(() => PreSaleVesting.link({UAC: uac.address}))
     })
 
     before("deploy UACUnsold", () => {
         return UACUnsold.new({from: owner})
             .then(_uacUnsold => uacUnsold = _uacUnsold)
-            .then(() => ICO.link({UACUnsold: uacUnsold.address}))
     })
 
     beforeEach("deploy FounderVesting", () => {
@@ -264,28 +259,24 @@ describe("ICO tests", () => {
             })).should.be.rejected
     })
 
-    it("should buy 550 tokens with the buyTokens function", () => {
+    it("should not buy tokens after ICO's finish time", () => {
         return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address)
-            .then(() => ico.isIcoRunning())
-            .then(isIcoRunning => assert(!isIcoRunning, "it should not be started yet"))
             .then(() => ico.startICO({from: owner}))
-            .then(() => ico.isIcoRunning())
-            .then(isIcoRunning => assert(isIcoRunning, "it should be started"))
             .then(() => web3.eth.getBlockNumberPromise())
-            .then((number) => ico.setBlockNumberStart(number, {from:owner}))
+            .then((number) => ico.setBlockNumberStart(number, {from: owner}))
             .then(() => web3.currentProvider.sendAsyncPromise({
                 jsonrpc: "2.0",
                 method: "evm_mine",
                 params: [],
                 id: 0
             }))
-            .then(() => ico.buyTokens(buyer, {value: web3.toWei(1, "ether"), from:buyer}))
-            .then(() => ico.icoTokensSold())
-            .then(t => assert.strictEqual(t.toString(10), web3.toWei(550, "ether"), "should be 550 tokens"))
-            .then(() => uac.balanceOf(buyer))
-            .then(b => assert.strictEqual(b.toString(10), web3.toWei(550, "ether"), "should be 550 tokens"))
-            .then(() => ico.getTotalCollectedWei())
-            .then(wei => assert.strictEqual(wei.toString(10), web3.toWei(1, "ether"), "should be 1 ether"))
+            .then(() => ico.setIcoFinishTime(0, {from: owner}))
+            .then(() => web3.eth.sendTransactionPromise({
+                from: buyer,
+                to: ico.address,
+                value: 10
+            })).should.be.rejected
+
     })
 
     it("should buy 550 tokens with the fallback function", () => {
@@ -296,7 +287,7 @@ describe("ICO tests", () => {
             .then(() => ico.isIcoRunning())
             .then(isIcoRunning => assert(isIcoRunning, "it should be started"))
             .then(() => web3.eth.getBlockNumberPromise())
-            .then((number) => ico.setBlockNumberStart(number, {from:owner}))
+            .then((number) => ico.setBlockNumberStart(number, {from: owner}))
             .then(() => web3.currentProvider.sendAsyncPromise({
                 jsonrpc: "2.0",
                 method: "evm_mine",
@@ -322,7 +313,7 @@ describe("ICO tests", () => {
             .then(() => ico.isIcoRunning())
             .then(isIcoRunning => assert(isIcoRunning, "it should be started"))
             .then(() => web3.eth.getBlockNumberPromise())
-            .then((number) => ico.setBlockNumberStart(number, {from:owner}))
+            .then((number) => ico.setBlockNumberStart(number, {from: owner}))
             .then(() => web3.currentProvider.sendAsyncPromise({
                 jsonrpc: "2.0",
                 method: "evm_mine",
@@ -360,11 +351,11 @@ describe("ICO tests", () => {
             .then(b => assert.strictEqual(b.toString(10), web3.toWei(1100, "ether"), "should be 1100 tokens"))
     })
 
-    it("should rejected a transaction of less than 100 finney",() => {
+    it("should reject a transaction of less than 100 finney", () => {
         return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address)
             .then(() => ico.startICO({from: owner}))
             .then(() => web3.eth.getBlockNumberPromise())
-            .then((number) => ico.setBlockNumberStart(number, {from:owner}))
+            .then((number) => ico.setBlockNumberStart(number, {from: owner}))
             .then(() => web3.currentProvider.sendAsyncPromise({
                 jsonrpc: "2.0",
                 method: "evm_mine",
@@ -391,14 +382,14 @@ describe("ICO tests", () => {
         return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address)
             .then(() => ico.startICO({from: owner}))
             .then(() => web3.eth.getBlockNumberPromise())
-            .then((number) => ico.setBlockNumberStart(number, {from:owner}))
+            .then((number) => ico.setBlockNumberStart(number, {from: owner}))
             .then(() => web3.currentProvider.sendAsyncPromise({
                 jsonrpc: "2.0",
                 method: "evm_mine",
                 params: [],
                 id: 0
             }))
-            .then(() => ico.setUsdPerEthRate(1500000,{from: owner}))
+            .then(() => ico.setUsdPerEthRate(1500000, {from: owner}))
             .then(() => ico.usdPerEth())
             .then(u => assert.strictEqual(u.toString(10), "1500000", "should be 1500000"))
             .then(() => ico.setUsdTokenPrice(1, {from: owner}))
@@ -419,14 +410,14 @@ describe("ICO tests", () => {
         return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address)
             .then(() => ico.startICO({from: owner}))
             .then(() => web3.eth.getBlockNumberPromise())
-            .then((number) => ico.setBlockNumberStart(number, {from:owner}))
+            .then((number) => ico.setBlockNumberStart(number, {from: owner}))
             .then(() => web3.currentProvider.sendAsyncPromise({
                 jsonrpc: "2.0",
                 method: "evm_mine",
                 params: [],
                 id: 0
             }))
-            .then(() => ico.setUsdPerEthRate(1500000,{from: owner}))
+            .then(() => ico.setUsdPerEthRate(1500000, {from: owner}))
             .then(() => ico.setUsdTokenPrice(1, {from: owner}))
             .then(() => web3.eth.sendTransactionPromise({
                 from: buyer,
@@ -437,6 +428,24 @@ describe("ICO tests", () => {
             .then(t => assert.strictEqual(t.toString(10), web3.toWei(15000000, "ether"), "should be 15000000 tokens"))
             .then(() => uac.balanceOf(buyer))
             .then(b => assert.strictEqual(b.toString(10), web3.toWei(15000000, "ether"), "should be 15000000 tokens"))
+            .then(() => ico.refundAmount())
+            .then(amount => assert.strictEqual(amount.toString(10), web3.toWei(2, "ether"), "should be 2 ether"))
+            .then(() => ico.toBeRefund())
+            .then(address => assert.strictEqual(address.toString(10), buyer, "should be buyer"))
+            .then(() => ico.refund({from: owner}))
+            .then(() => ico.refundAmount())
+            .then(amount => assert.strictEqual(amount.toString(10), web3.toWei(0, "ether"), "should be 0 ether"))
+            .then(() => ico.toBeRefund())
+            .then(address => assert.strictEqual(address.toString(10), "0x0000000000000000000000000000000000000000", "should be null"))
     })
 
+    it("should receive invalid PreSaleVestingAddress and then set the right one", () => {
+        return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, "0x0")
+            .then(() => ico.preSaleVestingAddress())
+            .then(address => assert.strictEqual(address.toString(), "0x0000000000000000000000000000000000000000", "should be null"))
+            .then(() => ico.setPreSaleVestingAddress(preSaleVesting.address, {from:owner}))
+            .then(() => ico.preSaleVestingAddress())
+            .then(address => assert.strictEqual(address.toString(), preSaleVesting.address, "should be preSaleVesting address"))
+    })
 })
+

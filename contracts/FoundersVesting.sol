@@ -1,15 +1,17 @@
 pragma solidity ^0.4.18;
 
 import "./SafeMath.sol";
-import "./UAC.sol";
 import "./Owned.sol";
 
+contract UAC {
+    function balanceOf(address _owner) public constant returns (uint256);
+    function transfer(address _to, uint256 _value) public returns(bool);
+}
 
 contract FoundersVesting is Owned{
 
     using SafeMath for uint;
 
-    address public owner;
     address public teamAccountAddress;
     uint64 public lastWithdrawTime;
 
@@ -24,14 +26,6 @@ contract FoundersVesting is Owned{
         lastWithdrawTime = uint64(now);
 
         uacToken = UAC(_uacTokenAddress);
-
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner()
-    {
-        require(msg.sender == owner);
-        _;
     }
 
     function withdrawTokens()
