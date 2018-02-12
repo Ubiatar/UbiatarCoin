@@ -49,12 +49,6 @@ contract ReservationContract is Owned
         ico = ICO(_icoContractAddress);
     }
 
-    function setUacContractAddress(address _uacContractAddress)
-    onlyOwner
-    {
-        uacContractAddress = _uacContractAddress;
-    }
-
     function getIcoBlockNumberStart()
     onlyOwner
     {
