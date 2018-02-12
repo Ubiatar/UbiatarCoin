@@ -1,13 +1,13 @@
 pragma solidity ^0.4.18;
 
-// Maps account addresses and balances from PreSale
-
 import "./SafeMath.sol";
 import "./Owned.sol";
 
 contract ICO
 {
-    // @TODO: put interface
+    function getBlockNumberStart() constant public returns (uint);
+    function reclaimTokensRC(address _buyer, uint _tokens) returns (bool);
+    function reserveTokensRC() payable returns (uint);
 }
 
 contract ReservationContract is Owned
@@ -59,7 +59,7 @@ contract ReservationContract is Owned
     onlyOwner
     {
         icoBlockNumberStart = ico.getBlockNumberStart();
-        rcBlockNumberStart = icoBlockNumberStart - uint(2 days / 17 seconds);
+        rcBlockNumberStart = icoBlockNumberStart - uint(2 days).div(uint(17 seconds));
     }
 
     function()
@@ -68,7 +68,7 @@ contract ReservationContract is Owned
     {
         require(msg.value >= 500 finney);
         uint tokens = ico.reserveTokensRC();
-        investorsTokens[msg.sender].add(tokens);
+        investorsTokens[msg.sender] = investorsTokens[msg.sender].add(tokens);
     }
 
     function getReservedTokens(address investor)
@@ -76,7 +76,7 @@ contract ReservationContract is Owned
     public
     returns (uint balance)
     {
-        return investorsTokens(investor);
+        return investorsTokens[investor];
     }
 
     function withdrawTokens()

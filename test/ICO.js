@@ -32,6 +32,7 @@ const Owned = truffleContract(require(__dirname + "/../build/contracts/Owned.jso
 const ICO = truffleContract(require(__dirname + "/../build/contracts/ICO.json"))
 const UACUnsold = truffleContract(require(__dirname + "/../build/contracts/UACUnsold.json"))
 const FoundersVesting = truffleContract(require(__dirname + "/../build/contracts/FoundersVesting.json"))
+const ReservationContract = truffleContract(require(__dirname + "/../build/contracts/ReservationContract.json"))
 SafeMath.setProvider(web3.currentProvider)
 StdToken.setProvider(web3.currentProvider)
 PreSaleVesting.setProvider(web3.currentProvider)
@@ -40,6 +41,7 @@ Owned.setProvider(web3.currentProvider)
 ICO.setProvider(web3.currentProvider)
 UACUnsold.setProvider(web3.currentProvider)
 FoundersVesting.setProvider(web3.currentProvider)
+ReservationContract.setProvider(web3.currentProvider)
 
 
 const assertEvent = (contract, filter) => {
@@ -85,7 +87,7 @@ const mineBlock = () => {
 
 
 describe("ICO tests", () => {
-    var accounts, networkId, safeMath, preSaleVesting, uac, stdToken, owned, uacUnsold, foundersVesting, ico
+    var accounts, networkId, safeMath, preSaleVesting, uac, stdToken, owned, uacUnsold, foundersVesting, ico, reservationContract
     var owner, user, buyer
 
     before("get accounts", () => {
@@ -143,6 +145,11 @@ describe("ICO tests", () => {
             .then(_uacUnsold => uacUnsold = _uacUnsold)
     })
 
+    beforeEach("deploy ReservationContract", () => {
+        return ReservationContract.new({from: owner})
+            .then(_reservationContract => reservationContract = _reservationContract)
+    })
+
     beforeEach("deploy FounderVesting", () => {
         return FoundersVesting.new(owner, uac.address, {from: owner})
             .then(_foundersVesting => foundersVesting = _foundersVesting)
@@ -158,6 +165,7 @@ describe("ICO tests", () => {
             .then(_ico => ico = _ico)
             .then(() => uac.setIcoContractAddress(ico.address, {from: owner}))
             .then(() => preSaleVesting.setIcoContractAddress(ico.address, {from: owner}))
+            .then(() => reservationContract.setIcoContractAddress(ico.address, {from: owner}))
     }
 
     it("should start the ICO", () => {
@@ -167,24 +175,17 @@ describe("ICO tests", () => {
             .then(isIcoRunning => assert.strictEqual(isIcoRunning, true, "it should be started"))
     })
 
-    it("should get the number of UAC token per eth", () => {
+   /* it("should get the number of UAC token per eth", () => {
         return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address)
             .then(() => ico.getUacTokensPerEth())
             .then(uacTokensPerEth => assert.strictEqual(uacTokensPerEth.toString(10), web3.toWei(550, "ether"), "should be started"))
-    })
+    }) */
 
-    it("should change the usdPerEth", () => {
-        return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address)
-            .then(() => ico.setUsdPerEthRate(600, {from: owner}))
-            .then(() => ico.usdPerEth())
-            .then(uxe => assert.strictEqual(uxe.toString(10), "600", "should be 600"))
-    })
-
-    it("should change the usdPerEth and get the number of UAC token per eth", () => {
+    it("should change the usdPerEth and check it", () => {
         return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address)
             .then(() => ico.setUsdPerEthRate(60000, {from: owner}))
-            .then(() => ico.getUacTokensPerEth())
-            .then(uacTokensPerEth => assert.strictEqual(uacTokensPerEth.toString(10), web3.toWei(300, "ether"), "should be started"))
+            .then(() => ico.usdPerEth())
+            .then(uacTokensPerEth => assert.strictEqual(uacTokensPerEth.toString(10), "60000", "should be started"))
     })
 
     it("should start ico, pause it and then start it again", () => {
@@ -437,6 +438,20 @@ describe("ICO tests", () => {
             .then(amount => assert.strictEqual(amount.toString(10), web3.toWei(0, "ether"), "should be 0 ether"))
             .then(() => ico.toBeRefund())
             .then(address => assert.strictEqual(address.toString(10), "0x0000000000000000000000000000000000000000", "should be null"))
+    })
+
+    it("should not be able to call the buyTokens() function", () => {
+        return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address)
+            .then(() => ico.startICO({from: owner}))
+            .then(() => web3.eth.getBlockNumberPromise())
+            .then((number) => ico.setBlockNumberStart(number, {from: owner}))
+            .then(() => web3.currentProvider.sendAsyncPromise({
+                jsonrpc: "2.0",
+                method: "evm_mine",
+                params: [],
+                id: 0
+            }))
+            .then(() => ico.buyTokens(buyer, 10, {from: buyer})).should.be.rejected
     })
 
     it("should receive invalid PreSaleVestingAddress and then set the right one", () => {

@@ -24,8 +24,10 @@ contract ICO is Owned {
 
     address[] public multisigs;
 
-    // Counts ETH invested by person, we might not need it
-    mapping(address => uint) ethInvestedBy;
+    mapping(address => bool) reservationContracts;
+
+    uint public reservedTokens = 0;
+
     uint collectedWei = 0;
 
     // Standard token price is 200 dollar CENTS per token
@@ -95,6 +97,18 @@ contract ICO is Owned {
         _;
     }
 
+    modifier onlyRC()
+    {
+        require(reservationContracts[msg.sender] == true);
+        _;
+    }
+
+    modifier onlyBeforeBlockNumber()
+    {
+        require(block.number < icoBlockNumberStart);
+        _;
+    }
+
     modifier onlyAfterBlockNumber()
     {
         require(block.number >= icoBlockNumberStart);
@@ -115,11 +129,13 @@ contract ICO is Owned {
 
     // Events:
     event LogStateSwitch(State newState);
-    event LogBuy(address indexed owner, uint value);
-    event LogBurn(address indexed owner, uint value);
+    event LogBuy(address owner, uint value);
+    event LogBurn(address owner, uint value);
     event LogWithdraw(address to, uint value);
     event LogOverflow(address to, uint value);
     event LogRefund(address to, uint value);
+    event LogRcReserve(address to, uint value);
+    event LogRcWithdraw(address to, uint value);
 
     // Functions:
     /// @dev Constructor
@@ -211,6 +227,7 @@ contract ICO is Owned {
     }
 
     function refund()
+    public
     onlyOwner
     {
         require(toBeRefund != 0x0);
@@ -223,23 +240,19 @@ contract ICO is Owned {
         LogRefund(_toBeRefund, _refundAmount);
     }
 
-    function buyTokens(address _buyer)
-    public
-    payable
+    function buyTokens(address _buyer, uint discountPercent)
+    internal
     onlyInState(State.ICORunning)
     onlyBeforeIcoFinishTime
     onlyAfterBlockNumber
     {
         require(msg.value >= 100 finney);
 
-        uint newTokens = (msg.value * getUacTokensPerEth()) / 1 ether;
+        uint newTokens = (msg.value * getUacTokensPerEth(discountPercent)) / 1 ether;
 
-          if ((icoTokensSold + newTokens) <= ICO_TOKEN_SUPPLY_LIMIT)
+          if ((icoTokensSold + reservedTokens + newTokens) <= ICO_TOKEN_SUPPLY_LIMIT)
           {
               issueTokensInternal(_buyer, newTokens);
-
-              // Update this only when buying from ETH
-              ethInvestedBy[_buyer] = ethInvestedBy[_buyer].add(msg.value);
 
               // This is total collected ETH
               collectedWei = collectedWei.add(msg.value);
@@ -247,7 +260,7 @@ contract ICO is Owned {
           else
           {
               uint tokensBought = ICO_TOKEN_SUPPLY_LIMIT.sub(icoTokensSold);
-              uint _refundAmount = msg.value.sub((tokensBought.div(getUacTokensPerEth())).mul(1 ether));
+              uint _refundAmount = msg.value.sub((tokensBought.div(getUacTokensPerEth(discountPercent))).mul(1 ether));
               require(_refundAmount < msg.value);
               refundAmount = _refundAmount;
               toBeRefund = _buyer;
@@ -255,17 +268,43 @@ contract ICO is Owned {
 
               issueTokensInternal(_buyer, tokensBought);
 
-              ethInvestedBy[_buyer] = ethInvestedBy[_buyer].add(_refundAmount);
-
               // This is total collected ETH
               collectedWei = collectedWei.add(_refundAmount);
           }
     }
 
+    function reserveTokensRC()
+    payable
+    onlyRC
+    onlyBeforeBlockNumber
+    returns (uint)
+    {
+        uint newTokens = (msg.value * getUacTokensPerEth(25)) / 1 ether;
+        require((reservedTokens + icoTokensSold + newTokens) <= ICO_TOKEN_SUPPLY_LIMIT);
+        reservedTokens = reservedTokens.add(newTokens);
+        collectedWei = collectedWei.add(msg.value);
+        LogRcReserve(msg.sender, newTokens);
+        return newTokens;
+    }
+
+    function reclaimTokensRC(address _buyer, uint _tokens)
+    onlyRC
+    onlyAfterBlockNumber
+    returns (bool)
+    {
+        require(reservedTokens >= _tokens);
+        reservedTokens = reservedTokens.sub(_tokens);
+        icoTokensSold = icoTokensSold.add(_tokens);
+        uacToken.issueTokens(_buyer, _tokens);
+        LogRcWithdraw(_buyer, _tokens);
+        return true;
+    }
+
+
     function issueTokensInternal(address _to, uint _tokens)
     internal
     {
-        require((icoTokensSold + _tokens) <= ICO_TOKEN_SUPPLY_LIMIT);
+        require((icoTokensSold + icoTokensSold + _tokens) <= ICO_TOKEN_SUPPLY_LIMIT);
 
         uacToken.issueTokens(_to, _tokens);
         icoTokensSold += _tokens;
@@ -276,6 +315,7 @@ contract ICO is Owned {
     //Setters
 
     function setUacTokenAddress(address _uacTokenAddress)
+    public
     onlyOwner
     onlyInState(State.Init)
     {
@@ -284,6 +324,7 @@ contract ICO is Owned {
     }
 
     function setUnsoldContractAddress(address _unsoldContractAddress)
+    public
     onlyOwner
     onlyInState(State.Init)
     {
@@ -291,6 +332,7 @@ contract ICO is Owned {
     }
 
     function setFoundersVestingAddress(address _foundersVestingAddress)
+    public
     onlyOwner
     onlyInState(State.Init)
     {
@@ -299,6 +341,7 @@ contract ICO is Owned {
     }
 
     function setPreSaleVestingAddress(address _preSaleVestingAddress)
+    public
     onlyOwner
     onlyInState(State.Init)
     {
@@ -307,12 +350,14 @@ contract ICO is Owned {
     }
 
     function setBlockNumberStart(uint _blockNumber)
+    public
     onlyOwner
     {
         icoBlockNumberStart = _blockNumber;
     }
 
     function setIcoFinishTime(uint _time)
+    public
     onlyOwner
     {
         icoFinishTime = _time;
@@ -333,12 +378,28 @@ contract ICO is Owned {
     }
 
     function setUsdTokenPrice(uint tokenPrice)
+    public
     onlyOwner
     {
         usdTokenPrice = tokenPrice;
     }
 
+    function setReservationContractAddress(address _rcAddress)
+    public
+    onlyOwner
+    {
+        reservationContracts[_rcAddress] = true;
+    }
+
     // Getters
+
+    function getBlockNumberStart()
+    constant
+    public
+    returns (uint)
+    {
+        return icoBlockNumberStart;
+    }
 
     function getTokensIcoSold()
     constant
@@ -385,20 +446,22 @@ contract ICO is Owned {
     public
     returns (bool)
     {
-        return (currentState == State.ICOFinished || icoTokensSold >= ICO_TOKEN_SUPPLY_LIMIT);
+        return (currentState == State.ICOFinished || icoTokensSold + reservedTokens >= ICO_TOKEN_SUPPLY_LIMIT);
     }
 
-    function getUacTokensPerEth()
+    function getUacTokensPerEth(uint discountPercent)
     constant
+    internal
     returns (uint)
     {
-        uint uacPerEth = (usdPerEth * 1 ether) / usdTokenPrice;
+        uint tokenPrice = (usdTokenPrice * 100) / (100 + discountPercent);
+        uint uacPerEth = (usdPerEth * 1 ether) / tokenPrice;
         return uacPerEth;
     }
 
     // Default fallback function
     function() payable {
         // buyTokens -> issueTokensInternal
-        buyTokens(msg.sender);
+        buyTokens(msg.sender, 0);
     }
 }

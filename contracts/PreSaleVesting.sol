@@ -21,6 +21,8 @@ contract PreSaleVesting is Owned
 
     address public icoContractAddress = 0x0;
 
+    address public uacTokenAddress =0x0;
+
     struct Investor
     {
         uint initialBalance;
@@ -124,6 +126,13 @@ contract PreSaleVesting is Owned
     onlyOwner
     {
         icoContractAddress = _icoContractAddress;
+    }
+
+    function setUacTokenAddress(address _uacTokenAddress)
+    onlyOwner
+    {
+        uacTokenAddress = _uacTokenAddress;
+        uacToken = UAC(_uacTokenAddress);
     }
 
     function withdrawTokens()

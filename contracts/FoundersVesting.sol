@@ -18,6 +18,8 @@ contract FoundersVesting is Owned{
     uint public withdrawsCount = 0;
     uint public amountToSend = 0;
 
+    address public uacTokenAddress = 0x0;
+
     UAC public uacToken;
 
     function FoundersVesting(address _teamAccountAddress, address _uacTokenAddress)
@@ -26,6 +28,19 @@ contract FoundersVesting is Owned{
         lastWithdrawTime = uint64(now);
 
         uacToken = UAC(_uacTokenAddress);
+    }
+
+    function setUacTokenAddress(address _uacTokenAddress)
+    onlyOwner
+    {
+        uacTokenAddress = _uacTokenAddress;
+        uacToken = UAC(_uacTokenAddress);
+    }
+
+    function setTeamAccountAddress(address _teamAccountAddress)
+    onlyOwner
+    {
+        teamAccountAddress = _teamAccountAddress;
     }
 
     function withdrawTokens()
