@@ -6,7 +6,7 @@ import "./Owned.sol";
 contract UAC {
     function lockTransfer(bool _lock);
     function issueTokens(address _who, uint _tokens);
-    function balanceOf(address _owner) public  constant  returns (uint256);
+    function balanceOf(address _owner) public constant returns (uint256);
 }
 
 contract PreSaleVesting {
@@ -123,7 +123,7 @@ contract ICO is Owned {
 
     modifier canFinishICO()
     {
-        require((uint(now) >= icoFinishTime) || (icoTokensSold == ICO_TOKEN_SUPPLY_LIMIT));
+        require((uint(now) >= icoFinishTime) || (icoTokensSold + reservedTokens == ICO_TOKEN_SUPPLY_LIMIT));
         _;
     }
 
@@ -392,6 +392,14 @@ contract ICO is Owned {
     }
 
     // Getters
+
+    function getreservationContractsAddress(address _rc)
+    constant
+    public
+    returns (bool)
+    {
+        return(reservationContracts[_rc]);
+    }
 
     function getBlockNumberStart()
     constant

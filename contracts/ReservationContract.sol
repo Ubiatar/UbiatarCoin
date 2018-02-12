@@ -21,8 +21,6 @@ contract ReservationContract is Owned
     mapping(address => uint) investorsTokens;
     ICO public ico;
 
-    function ReservationContract() {}
-
     modifier byIcoContract()
     {
         require(msg.sender == icoContractAddress);

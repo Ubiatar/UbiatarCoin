@@ -169,7 +169,7 @@ describe("ICO tests", () => {
     }
 
     it("should start the ICO", () => {
-        return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address)
+           return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address)
             .then(() => ico.startICO({from: owner}))
             .then(() => ico.isIcoRunning())
             .then(isIcoRunning => assert.strictEqual(isIcoRunning, true, "it should be started"))
