@@ -49,12 +49,6 @@ contract ReservationContract is Owned
         ico = ICO(_icoContractAddress);
     }
 
-    function setUacContractAddress(address _uacContractAddress)
-    onlyOwner
-    {
-        uacContractAddress = _uacContractAddress;
-    }
-
     function getIcoBlockNumberStart()
     onlyOwner
     {
@@ -68,7 +62,7 @@ contract ReservationContract is Owned
     {
         require(msg.value >= 500 finney);
         uint tokens = ico.reserveTokensRC();
-        investorsTokens[msg.sender].add(tokens);
+        investorsTokens[msg.sender] = investorsTokens[msg.sender].add(tokens);
     }
 
     function getReservedTokens(address investor)
