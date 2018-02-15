@@ -21,7 +21,7 @@ contract PreSaleVesting is Owned
 
     address public icoContractAddress = 0x0;
 
-    address public uacTokenAddress =0x0;
+    address public uacTokenAddress = 0x0;
 
     struct Investor
     {
@@ -100,6 +100,7 @@ contract PreSaleVesting is Owned
         investors[address(0xCb8aB95570c9DFd16b0995f9fe4AA0BDe0C749Aa)].initialBalance = 27657500000000053240687;
 
         uacToken = UAC(_uacTokenAddress);
+        uacTokenAddress = _uacTokenAddress;
     }
 
     modifier byIcoContract()

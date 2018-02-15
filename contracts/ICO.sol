@@ -17,6 +17,14 @@ contract FoundersVesting {
 
 }
 
+contract Bounties {
+
+}
+
+contract UbiatarPlay {
+    function icoFinished();
+}
+
 // This is the main UbiatarCoin ICO smart contract
 contract ICO is Owned {
 
@@ -39,11 +47,15 @@ contract ICO is Owned {
     uint public usdPerEth = 1100 * 100;
 
     // Founders reward
-    uint public constant FOUNDERS_REWARD = 2000000 * 1 ether;
+    uint public constant FOUNDERS_REWARD = 0 * 1 ether;
     // Tokens bought in PreSale
     uint public constant PRESALE_REWARD = 17584778551358900100698693;
     // 15 000 000 tokens sold during the ICO
     uint public constant ICO_TOKEN_SUPPLY_LIMIT = 15000000 * 1 ether;
+    // 3 000 000 tokens for bounties
+    uint public constant BOUNTIES_TOKENS = 3000000 * 1 ether;
+    // 50 500 000 tokens for Ubiatar Play
+    uint public constant UBIATARPLAY_TOKENS = 50500000 * 1 ether;
 
     // Fields:
 
@@ -65,16 +77,24 @@ contract ICO is Owned {
     address public foundersVestingAddress = 0x0;
     // This is where PRESALE_REWARD will be allocated
     address public preSaleVestingAddress = 0x0;
+    // This is where UBIATARPLAY_TOKENS will be allocated
+    address public ubiatarPlayAddress = 0x0;
 
     address public uacTokenAddress = 0x0;
 
     address public unsoldContractAddress = 0x0;
+
+    address public bountiesWalletAddress = 0x0;
 
     UAC public uacToken;
 
     PreSaleVesting public preSaleVesting;
 
     FoundersVesting public foundersVesting;
+
+    Bounties public bounties;
+
+    UbiatarPlay public ubiatarPlay;
 
     enum State
     {
@@ -144,17 +164,20 @@ contract ICO is Owned {
         address _uacTokenAddress,
         address _unsoldContractAddress,
         address _foundersVestingAddress,
-        address _preSaleVestingAddress
+        address _preSaleVestingAddress,
+        address _ubiatarPlayAddress
     )
     {
         uacToken = UAC(_uacTokenAddress);
         preSaleVesting = PreSaleVesting(_preSaleVestingAddress);
         foundersVesting = FoundersVesting(_foundersVestingAddress);
+        ubiatarPlay = UbiatarPlay(_ubiatarPlayAddress);
 
         uacTokenAddress = _uacTokenAddress;
         unsoldContractAddress = _unsoldContractAddress;
         foundersVestingAddress = _foundersVestingAddress;
         preSaleVestingAddress = _preSaleVestingAddress;
+        ubiatarPlayAddress = _ubiatarPlayAddress;
     }
 
     function startICO()
@@ -166,6 +189,8 @@ contract ICO is Owned {
         uacToken.lockTransfer(true);
         uacToken.issueTokens(foundersVestingAddress, FOUNDERS_REWARD);
         uacToken.issueTokens(preSaleVestingAddress, PRESALE_REWARD);
+        uacToken.issueTokens(bountiesWalletAddress, BOUNTIES_TOKENS);
+        uacToken.issueTokens(ubiatarPlayAddress, UBIATARPLAY_TOKENS);
     }
 
     function pauseICO()
@@ -203,6 +228,7 @@ contract ICO is Owned {
         }
 
         preSaleVesting.icoFinished();
+        ubiatarPlay.icoFinished();
 
         // Should be changed to our desired method of storing ether
         // 3 - send all ETH to multisigs
@@ -240,7 +266,7 @@ contract ICO is Owned {
         LogRefund(_toBeRefund, _refundAmount);
     }
 
-    function buyTokens(address _buyer, uint discountPercent)
+    function buyTokens(address _buyer, uint bonusPercent)
     internal
     onlyInState(State.ICORunning)
     onlyBeforeIcoFinishTime
@@ -248,7 +274,7 @@ contract ICO is Owned {
     {
         require(msg.value >= 100 finney);
 
-        uint newTokens = (msg.value * getUacTokensPerEth(discountPercent)) / 1 ether;
+        uint newTokens = (msg.value * getUacTokensPerEth(bonusPercent)) / 1 ether;
 
           if ((icoTokensSold + reservedTokens + newTokens) <= ICO_TOKEN_SUPPLY_LIMIT)
           {
@@ -260,7 +286,7 @@ contract ICO is Owned {
           else
           {
               uint tokensBought = ICO_TOKEN_SUPPLY_LIMIT.sub(icoTokensSold);
-              uint _refundAmount = msg.value.sub((tokensBought.div(getUacTokensPerEth(discountPercent))).mul(1 ether));
+              uint _refundAmount = msg.value.sub((tokensBought.div(getUacTokensPerEth(bonusPercent))).mul(1 ether));
               require(_refundAmount < msg.value);
               refundAmount = _refundAmount;
               toBeRefund = _buyer;
@@ -274,6 +300,7 @@ contract ICO is Owned {
     }
 
     function reserveTokensRC()
+    public
     payable
     onlyRC
     onlyBeforeBlockNumber
@@ -288,6 +315,7 @@ contract ICO is Owned {
     }
 
     function reclaimTokensRC(address _buyer, uint _tokens)
+    public
     onlyRC
     onlyAfterBlockNumber
     returns (bool)
@@ -313,6 +341,23 @@ contract ICO is Owned {
     }
 
     //Setters
+
+    function setBountiesWalletAddress(address _bountiesWalletAddress)
+    public
+    onlyOwner
+    onlyInState(State.Init)
+    {
+        bountiesWalletAddress = _bountiesWalletAddress;
+    }
+
+    function setUbiatarPlayAddress(address _ubiatarPlayAddress)
+    public
+    onlyOwner
+    onlyInState(State.Init)
+    {
+        ubiatarPlayAddress = _ubiatarPlayAddress;
+        ubiatarPlay = UbiatarPlay(_ubiatarPlayAddress);
+    }
 
     function setUacTokenAddress(address _uacTokenAddress)
     public
@@ -457,12 +502,12 @@ contract ICO is Owned {
         return (currentState == State.ICOFinished || icoTokensSold + reservedTokens >= ICO_TOKEN_SUPPLY_LIMIT);
     }
 
-    function getUacTokensPerEth(uint discountPercent)
+    function getUacTokensPerEth(uint bonusPercent)
     constant
     internal
     returns (uint)
     {
-        uint tokenPrice = (usdTokenPrice * 100) / (100 + discountPercent);
+        uint tokenPrice = (usdTokenPrice * 100) / (100 + bonusPercent);
         uint uacPerEth = (usdPerEth * 1 ether) / tokenPrice;
         return uacPerEth;
     }
