@@ -32,8 +32,6 @@ contract ICO is Owned {
 
     address[] public multisigs;
 
-    mapping(address => bool) reservationContracts;
-
     uint public reservedTokens = 0;
 
     uint collectedWei = 0;
@@ -117,12 +115,6 @@ contract ICO is Owned {
         _;
     }
 
-    modifier onlyRC()
-    {
-        require(reservationContracts[msg.sender] == true);
-        _;
-    }
-
     modifier onlyBeforeBlockNumber()
     {
         require(block.number < icoBlockNumberStart);
@@ -154,8 +146,6 @@ contract ICO is Owned {
     event LogWithdraw(address to, uint value);
     event LogOverflow(address to, uint value);
     event LogRefund(address to, uint value);
-    event LogRcReserve(address to, uint value);
-    event LogRcWithdraw(address to, uint value);
 
     // Functions:
     /// @dev Constructor
@@ -299,36 +289,6 @@ contract ICO is Owned {
           }
     }
 
-    function reserveTokensRC()
-    public
-    payable
-    onlyRC
-    onlyBeforeBlockNumber
-    returns (uint)
-    {
-        uint newTokens = (msg.value * getUacTokensPerEth(25)) / 1 ether;
-        require((reservedTokens + icoTokensSold + newTokens) <= ICO_TOKEN_SUPPLY_LIMIT);
-        reservedTokens = reservedTokens.add(newTokens);
-        collectedWei = collectedWei.add(msg.value);
-        LogRcReserve(msg.sender, newTokens);
-        return newTokens;
-    }
-
-    function reclaimTokensRC(address _buyer, uint _tokens)
-    public
-    onlyRC
-    onlyAfterBlockNumber
-    returns (bool)
-    {
-        require(reservedTokens >= _tokens);
-        reservedTokens = reservedTokens.sub(_tokens);
-        icoTokensSold = icoTokensSold.add(_tokens);
-        uacToken.issueTokens(_buyer, _tokens);
-        LogRcWithdraw(_buyer, _tokens);
-        return true;
-    }
-
-
     function issueTokensInternal(address _to, uint _tokens)
     internal
     {
@@ -429,22 +389,7 @@ contract ICO is Owned {
         usdTokenPrice = tokenPrice;
     }
 
-    function setReservationContractAddress(address _rcAddress)
-    public
-    onlyOwner
-    {
-        reservationContracts[_rcAddress] = true;
-    }
-
     // Getters
-
-    function getreservationContractsAddress(address _rc)
-    constant
-    public
-    returns (bool)
-    {
-        return(reservationContracts[_rc]);
-    }
 
     function getBlockNumberStart()
     constant
