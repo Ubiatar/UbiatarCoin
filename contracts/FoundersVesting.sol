@@ -4,30 +4,64 @@ import "./SafeMath.sol";
 import "./Owned.sol";
 
 contract UAC {
-    function balanceOf(address _owner) public constant returns (uint256);
     function transfer(address _to, uint256 _value) public returns(bool);
 }
 
-contract FoundersVesting is Owned{
-
+contract FoundersVesting is Owned
+{
     using SafeMath for uint;
 
-    address public teamAccountAddress;
-    uint64 public lastWithdrawTime;
+    bool public icoFinished = false;
 
-    uint public withdrawsCount = 0;
-    uint public amountToSend = 0;
+    address public icoContractAddress = 0x0;
 
     address public uacTokenAddress = 0x0;
 
+    address public foundersTokenHolder = 0x0;
+
+    uint public amountToSend = 0;
+
+    uint public lastWithdrawTime;
+
     UAC public uacToken;
 
-    function FoundersVesting(address _teamAccountAddress, address _uacTokenAddress)
+    uint public currentBalance = 12000000 * 1 ether;
+
+    uint public balanceFraction;
+
+    function FoundersVesting(address _uacTokenAddress)
     {
-        teamAccountAddress = _teamAccountAddress;
-        lastWithdrawTime = uint64(now);
+        require(_uacTokenAddress != 0x0);
 
         uacToken = UAC(_uacTokenAddress);
+        uacTokenAddress = _uacTokenAddress;
+        balanceFraction = ((currentBalance.mul(1 ether)).div(360 days)).div(1 ether);
+    }
+
+    modifier byIcoContract()
+    {
+        require(msg.sender == icoContractAddress);
+        _;
+    }
+
+    modifier onlyIcoFinished()
+    {
+        require(icoFinished == true);
+        _;
+    }
+
+    function icoFinished()
+    byIcoContract
+    {
+        lastWithdrawTime.add(360 days);
+        icoFinished = true;
+    }
+
+    function setIcoContractAddress(address _icoContractAddress)
+    public
+    onlyOwner
+    {
+        icoContractAddress = _icoContractAddress;
     }
 
     function setUacTokenAddress(address _uacTokenAddress)
@@ -37,37 +71,34 @@ contract FoundersVesting is Owned{
         uacToken = UAC(_uacTokenAddress);
     }
 
-    function setTeamAccountAddress(address _teamAccountAddress)
+    function setFoundersTokenHolder(address _foundersTokenHolder)
+    public
     onlyOwner
     {
-        teamAccountAddress = _teamAccountAddress;
+        foundersTokenHolder = _foundersTokenHolder;
     }
 
     function withdrawTokens()
-    onlyOwner
     public
+    onlyOwner
+    onlyIcoFinished
     {
-        // 1 - wait for the next month
-        uint64 oneMonth = lastWithdrawTime + 30 days;
-        require(uint(now) >= oneMonth);
+        amountToSend = 0;
+        uint daysPassed = (uint(now).sub(lastWithdrawTime)).div(1 days);
+        amountToSend = balanceFraction.mul(daysPassed);
+        lastWithdrawTime = uint(now);
 
-        // 2 - calculate amount (only first time)
-        if(withdrawsCount==0){
-            amountToSend = uacToken.balanceOf(this) / 10;
-        }
+        require(amountToSend != 0);
 
-        require(amountToSend!=0);
-
-        // 3 - send 1/10th
-        uint currentBalance = uacToken.balanceOf(this);
-        if(currentBalance<amountToSend){
+        if (currentBalance < amountToSend) {
             amountToSend = currentBalance;
         }
-        uacToken.transfer(teamAccountAddress,amountToSend);
 
-        // 4 - update counter
-        withdrawsCount++;
-        lastWithdrawTime = uint64(now);
+        currentBalance = currentBalance.sub(amountToSend);
+
+        uacToken.transfer(foundersTokenHolder, amountToSend);
+
+        amountToSend = 0;
     }
 
     // Do not allow to send money directly to this contract

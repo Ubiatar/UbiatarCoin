@@ -16,16 +16,17 @@ contract UAC is StdToken, Owned
     address public icoContractAddress = 0x0;
     bool public lockTransfers = false;
 
-    // Update with value of 15 mln + PreSale + founders + bounties
-    uint public constant TOTAL_TOKEN_SUPPLY = 86084778551358900100698693;
+    uint public constant TOTAL_TOKEN_SUPPLY = 100000000 * 1 ether;
     // total ICO token supply
     uint public constant TOTAL_ICO_SUPPLY = 15000000 * 1 ether;
     // total presale token supply
     uint public constant TOTAL_PRESALE_SUPPLY = 17584778551358900100698693;
-    // total bounties supply
-    uint public constant TOTAL_BOUNTIES_SUPPLY = 3000000 * 1 ether;
+    // total advisors supply
+    uint public constant TOTAL_ADVISORS_SUPPLY = 4915221448641099899301307;
     // total ubiatarPlay supply
     uint public constant TOTAL_UBIATARPLAY_SUPPLY = 50500000 * 1 ether;
+    // total founders supply
+    uint public constant TOTAL_FOUNDERS_SUPPLY = 12000000 * 1 ether;
 
     /// Modifiers:
 
@@ -46,7 +47,7 @@ contract UAC is StdToken, Owned
     // Functions:
     function UAC()
     {
-        assert(TOTAL_TOKEN_SUPPLY == 86084778551358900100698693);
+        assert(TOTAL_TOKEN_SUPPLY == 100000000 * 1 ether);
     }
 
     /// @dev Override

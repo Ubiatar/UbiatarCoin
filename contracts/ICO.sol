@@ -5,7 +5,9 @@ import "./Owned.sol";
 
 contract UAC {
     function lockTransfer(bool _lock);
+
     function issueTokens(address _who, uint _tokens);
+
     function balanceOf(address _owner) public constant returns (uint256);
 }
 
@@ -14,11 +16,7 @@ contract PreSaleVesting {
 }
 
 contract FoundersVesting {
-
-}
-
-contract Bounties {
-
+    function icoFinished();
 }
 
 contract UbiatarPlay {
@@ -45,13 +43,13 @@ contract ICO is Owned {
     uint public usdPerEth = 1100 * 100;
 
     // Founders reward
-    uint public constant FOUNDERS_REWARD = 0 * 1 ether;
+    uint public constant FOUNDERS_REWARD = 12000000 * 1 ether;
     // Tokens bought in PreSale
     uint public constant PRESALE_REWARD = 17584778551358900100698693;
     // 15 000 000 tokens sold during the ICO
     uint public constant ICO_TOKEN_SUPPLY_LIMIT = 15000000 * 1 ether;
-    // 3 000 000 tokens for bounties
-    uint public constant BOUNTIES_TOKENS = 3000000 * 1 ether;
+    // Tokens for advisors
+    uint public constant ADVISORS_TOKENS = 4915221448641099899301307 * 1 ether;
     // 50 500 000 tokens for Ubiatar Play
     uint public constant UBIATARPLAY_TOKENS = 50500000 * 1 ether;
 
@@ -82,15 +80,13 @@ contract ICO is Owned {
 
     address public unsoldContractAddress = 0x0;
 
-    address public bountiesWalletAddress = 0x0;
+    address public advisorsWalletAddress = 0x0;
 
     UAC public uacToken;
 
     PreSaleVesting public preSaleVesting;
 
     FoundersVesting public foundersVesting;
-
-    Bounties public bounties;
 
     UbiatarPlay public ubiatarPlay;
 
@@ -155,7 +151,8 @@ contract ICO is Owned {
         address _unsoldContractAddress,
         address _foundersVestingAddress,
         address _preSaleVestingAddress,
-        address _ubiatarPlayAddress
+        address _ubiatarPlayAddress,
+        address _advisorsWalletAddress
     )
     {
         uacToken = UAC(_uacTokenAddress);
@@ -168,6 +165,7 @@ contract ICO is Owned {
         foundersVestingAddress = _foundersVestingAddress;
         preSaleVestingAddress = _preSaleVestingAddress;
         ubiatarPlayAddress = _ubiatarPlayAddress;
+        advisorsWalletAddress = _advisorsWalletAddress;
     }
 
     function startICO()
@@ -179,7 +177,7 @@ contract ICO is Owned {
         uacToken.lockTransfer(true);
         uacToken.issueTokens(foundersVestingAddress, FOUNDERS_REWARD);
         uacToken.issueTokens(preSaleVestingAddress, PRESALE_REWARD);
-        uacToken.issueTokens(bountiesWalletAddress, BOUNTIES_TOKENS);
+        uacToken.issueTokens(advisorsWalletAddress, ADVISORS_TOKENS);
         uacToken.issueTokens(ubiatarPlayAddress, UBIATARPLAY_TOKENS);
     }
 
@@ -219,27 +217,28 @@ contract ICO is Owned {
 
         preSaleVesting.icoFinished();
         ubiatarPlay.icoFinished();
+        foundersVesting.icoFinished();
 
         // Should be changed to our desired method of storing ether
         // 3 - send all ETH to multisigs
         // we have N separate multisigs for extra security
-    /*    uint sendThisAmount = (this.balance / 10);
+        /*    uint sendThisAmount = (this.balance / 10);
 
-        // 3.1 - send to 9 multisigs
-        for (uint i = 0; i < 9; ++i) {
-            address ms = multisigs[i];
+            // 3.1 - send to 9 multisigs
+            for (uint i = 0; i < 9; ++i) {
+                address ms = multisigs[i];
 
-            if (this.balance >= sendThisAmount) {
-                ms.transfer(sendThisAmount);
+                if (this.balance >= sendThisAmount) {
+                    ms.transfer(sendThisAmount);
+                }
             }
-        }
 
-        // 3.2 - send everything left to 10th multisig
-        if (0 != this.balance) {
-            address lastMs = multisigs[9];
-            lastMs.transfer(this.balance);
-        }
-        */
+            // 3.2 - send everything left to 10th multisig
+            if (0 != this.balance) {
+                address lastMs = multisigs[9];
+                lastMs.transfer(this.balance);
+            }
+            */
     }
 
     function refund()
@@ -266,27 +265,27 @@ contract ICO is Owned {
 
         uint newTokens = (msg.value * getUacTokensPerEth(bonusPercent)) / 1 ether;
 
-          if ((icoTokensSold + reservedTokens + newTokens) <= ICO_TOKEN_SUPPLY_LIMIT)
-          {
-              issueTokensInternal(_buyer, newTokens);
+        if ((icoTokensSold + reservedTokens + newTokens) <= ICO_TOKEN_SUPPLY_LIMIT)
+        {
+            issueTokensInternal(_buyer, newTokens);
 
-              // This is total collected ETH
-              collectedWei = collectedWei.add(msg.value);
-          }
-          else
-          {
-              uint tokensBought = ICO_TOKEN_SUPPLY_LIMIT.sub(icoTokensSold);
-              uint _refundAmount = msg.value.sub((tokensBought.div(getUacTokensPerEth(bonusPercent))).mul(1 ether));
-              require(_refundAmount < msg.value);
-              refundAmount = _refundAmount;
-              toBeRefund = _buyer;
-              LogOverflow(_buyer, _refundAmount);
+            // This is total collected ETH
+            collectedWei = collectedWei.add(msg.value);
+        }
+        else
+        {
+            uint tokensBought = ICO_TOKEN_SUPPLY_LIMIT.sub(icoTokensSold);
+            uint _refundAmount = msg.value.sub((tokensBought.div(getUacTokensPerEth(bonusPercent))).mul(1 ether));
+            require(_refundAmount < msg.value);
+            refundAmount = _refundAmount;
+            toBeRefund = _buyer;
+            LogOverflow(_buyer, _refundAmount);
 
-              issueTokensInternal(_buyer, tokensBought);
+            issueTokensInternal(_buyer, tokensBought);
 
-              // This is total collected ETH
-              collectedWei = collectedWei.add(_refundAmount);
-          }
+            // This is total collected ETH
+            collectedWei = collectedWei.add(_refundAmount);
+        }
     }
 
     function issueTokensInternal(address _to, uint _tokens)
@@ -302,12 +301,12 @@ contract ICO is Owned {
 
     //Setters
 
-    function setBountiesWalletAddress(address _bountiesWalletAddress)
+    function setAdvisorsWalletAddress(address _advisorsWalletAddress)
     public
     onlyOwner
     onlyInState(State.Init)
     {
-        bountiesWalletAddress = _bountiesWalletAddress;
+        advisorsWalletAddress = _advisorsWalletAddress;
     }
 
     function setUbiatarPlayAddress(address _ubiatarPlayAddress)
@@ -459,7 +458,7 @@ contract ICO is Owned {
 
     function buyTokensFor(address _to)
     payable
-    public{
+    public {
         // buyTokens -> issueTokensInternal
         buyTokens(_to, 0);
     }

@@ -4,7 +4,7 @@
   "description": "Ubiatarplay ICO smart contracts",
   "main": "index.js",
   "scripts": {
-    "init": "truffle.cmd init",
+    "init": "truffle init",
     "test owned": "mocha test/Owned.js",
     "test preSaleVesting": "mocha test/PreSaleVesting.js",
     "test ico": "mocha test/ICO.js",
