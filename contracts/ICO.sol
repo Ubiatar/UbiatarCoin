@@ -512,6 +512,13 @@ contract ICO is Owned {
         return uacPerEth;
     }
 
+    function buyTokensFor(address _to)
+    payable
+    public{
+        // buyTokens -> issueTokensInternal
+        buyTokens(_to, 0);
+    }
+
     // Default fallback function
     function() payable {
         // buyTokens -> issueTokensInternal
