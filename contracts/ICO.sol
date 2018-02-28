@@ -49,7 +49,7 @@ contract ICO is Owned {
     // 15 000 000 tokens sold during the ICO
     uint public constant ICO_TOKEN_SUPPLY_LIMIT = 15000000 * 1 ether;
     // Tokens for advisors
-    uint public constant ADVISORS_TOKENS = 4915221448641099899301307 * 1 ether;
+    uint public constant ADVISORS_TOKENS = 4915221448641099899301307;
     // 50 500 000 tokens for Ubiatar Play
     uint public constant UBIATARPLAY_TOKENS = 50500000 * 1 ether;
 
