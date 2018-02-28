@@ -50,7 +50,8 @@ contract FoundersVesting is Owned
         _;
     }
 
-    function icoFinished()
+    function finishIco()
+    public
     byIcoContract
     {
         lastWithdrawTime.add(360 days);

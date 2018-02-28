@@ -150,12 +150,13 @@ describe("ICO tests", () => {
   beforeEach("deploy FoundersVesting", () => {
     return FoundersVesting.new(uac.address, {from: owner})
       .then(_foundersVesting => foundersVesting = _foundersVesting)
-     // .then(console.log(foundersVesting))
+      // .then(console.log(foundersVesting))
   })
 
   beforeEach("deploy PreSaleVesting", () => {
     return PreSaleVesting.new(uac.address, {from: owner})
       .then(_preSaleVesting => preSaleVesting = _preSaleVesting)
+      // .then(console.log(preSaleVesting))
   })
 
   beforeEach("deploy UbiatarPlay", () => {

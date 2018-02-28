@@ -15,8 +15,8 @@ contract PreSaleVesting {
     function icoFinished();
 }
 
-contract FoundersVesting {
-    function icoFinished();
+contract FoundersVestingAC {
+    function finishIco() public;
 }
 
 contract UbiatarPlay {
@@ -86,7 +86,7 @@ contract ICO is Owned {
 
     PreSaleVesting public preSaleVesting;
 
-    FoundersVesting public foundersVesting;
+    FoundersVestingAC public foundersVesting;
 
     UbiatarPlay public ubiatarPlay;
 
@@ -157,7 +157,7 @@ contract ICO is Owned {
     {
         uacToken = UAC(_uacTokenAddress);
         preSaleVesting = PreSaleVesting(_preSaleVestingAddress);
-        foundersVesting = FoundersVesting(_foundersVestingAddress);
+        foundersVesting = FoundersVestingAC(_foundersVestingAddress);
         ubiatarPlay = UbiatarPlay(_ubiatarPlayAddress);
 
         uacTokenAddress = _uacTokenAddress;
@@ -217,7 +217,7 @@ contract ICO is Owned {
 
         preSaleVesting.icoFinished();
         ubiatarPlay.icoFinished();
-        foundersVesting.icoFinished();
+        foundersVesting.finishIco();
 
         // Should be changed to our desired method of storing ether
         // 3 - send all ETH to multisigs
@@ -341,7 +341,7 @@ contract ICO is Owned {
     onlyInState(State.Init)
     {
         foundersVestingAddress = _foundersVestingAddress;
-        foundersVesting = FoundersVesting(_foundersVestingAddress);
+        foundersVesting = FoundersVestingAC(_foundersVestingAddress);
     }
 
     function setPreSaleVestingAddress(address _preSaleVestingAddress)
