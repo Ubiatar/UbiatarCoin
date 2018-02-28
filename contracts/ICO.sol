@@ -47,7 +47,7 @@ contract ICO is Owned {
     uint public usdPerEth = 1100 * 100;
 
     // Founders reward
-    uint public constant FOUNDERS_REWARD = 0 * 1 ether;
+    uint public constant FOUNDERS_REWARD = 12000000 * 1 ether;
     // Tokens bought in PreSale
     uint public constant PRESALE_REWARD = 17584778551358900100698693;
     // 15 000 000 tokens sold during the ICO

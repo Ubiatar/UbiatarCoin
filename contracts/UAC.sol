@@ -17,7 +17,7 @@ contract UAC is StdToken, Owned
     bool public lockTransfers = false;
 
     // Update with value of 15 mln + PreSale + founders + bounties
-    uint public constant TOTAL_TOKEN_SUPPLY = 86084778551358900100698693;
+    uint public constant TOTAL_TOKEN_SUPPLY = 98084778551358900100698693;
     // total ICO token supply
     uint public constant TOTAL_ICO_SUPPLY = 15000000 * 1 ether;
     // total presale token supply
@@ -26,6 +26,8 @@ contract UAC is StdToken, Owned
     uint public constant TOTAL_BOUNTIES_SUPPLY = 3000000 * 1 ether;
     // total ubiatarPlay supply
     uint public constant TOTAL_UBIATARPLAY_SUPPLY = 50500000 * 1 ether;
+    // total founders supply
+    uint public constant TOTAL_FOUNDERS_SUPPLY = 12000000 * 1 ether;
 
     /// Modifiers:
 
