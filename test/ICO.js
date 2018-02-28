@@ -29,7 +29,6 @@ const Owned = truffleContract(require(__dirname + "/../build/contracts/Owned.jso
 const ICO = truffleContract(require(__dirname + "/../build/contracts/ICO.json"))
 const UACUnsold = truffleContract(require(__dirname + "/../build/contracts/UACUnsold.json"))
 const FoundersVesting = truffleContract(require(__dirname + "/../build/contracts/FoundersVesting.json"))
-const ReservationContract = truffleContract(require(__dirname + "/../build/contracts/ReservationContract.json"))
 const UbiatarPlay = truffleContract(require(__dirname + "/../build/contracts/UbiatarPlay.json"))
 
 SafeMath.setProvider(web3.currentProvider)
@@ -40,7 +39,6 @@ Owned.setProvider(web3.currentProvider)
 ICO.setProvider(web3.currentProvider)
 UACUnsold.setProvider(web3.currentProvider)
 FoundersVesting.setProvider(web3.currentProvider)
-ReservationContract.setProvider(web3.currentProvider)
 UbiatarPlay.setProvider(web3.currentProvider)
 
 
@@ -88,7 +86,7 @@ const mineBlock = () => {
 
 describe("ICO tests", () => {
   var accounts, networkId, safeMath, preSaleVesting, uac, stdToken, owned, uacUnsold, foundersVesting, ico, ubiatarPlay
-  var owner, user, buyer
+  var owner, user, buyer, advisorsWallet
 
   before("get accounts", () => {
     return web3.eth.getAccountsPromise()
@@ -106,6 +104,7 @@ describe("ICO tests", () => {
         owner = accounts[0]
         user = accounts[1]
         buyer = accounts[2]
+        advisorsWallet = accounts[3]
       })
   })
 
@@ -148,9 +147,10 @@ describe("ICO tests", () => {
       .then(_uacUnsold => uacUnsold = _uacUnsold)
   })
 
-  beforeEach("deploy FounderVesting", () => {
-    return FoundersVesting.new(owner, uac.address, {from: owner})
+  beforeEach("deploy FoundersVesting", () => {
+    return FoundersVesting.new(uac.address, {from: owner})
       .then(_foundersVesting => foundersVesting = _foundersVesting)
+     // .then(console.log(foundersVesting))
   })
 
   beforeEach("deploy PreSaleVesting", () => {
@@ -163,16 +163,17 @@ describe("ICO tests", () => {
       .then(_ubiatarPlay => ubiatarPlay = _ubiatarPlay)
   })
 
-  const ICODeploy = (uacAddress, uacUnsoldAddress, founderVestingAddress, preSaleVestingAddress, ubiatarPlayAddress) => {
-    return ICO.new(uacAddress, uacUnsoldAddress, founderVestingAddress, preSaleVestingAddress, ubiatarPlayAddress, {from: owner})
+  const ICODeploy = (uacAddress, uacUnsoldAddress, foundersVestingAddress, preSaleVestingAddress, ubiatarPlayAddress, advisorsWallet) => {
+    return ICO.new(uacAddress, uacUnsoldAddress, foundersVestingAddress, preSaleVestingAddress, ubiatarPlayAddress, advisorsWallet, {from: owner})
       .then(_ico => ico = _ico)
       .then(() => uac.setIcoContractAddress(ico.address, {from: owner}))
       .then(() => preSaleVesting.setIcoContractAddress(ico.address, {from: owner}))
       .then(() => ubiatarPlay.setIcoContractAddress(ico.address, {from: owner}))
+      .then(() => foundersVesting.setIcoContractAddress(ico.address, {from: owner}))
   }
 
   it("should start the ICO", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => ico.isIcoRunning())
       .then(isIcoRunning => assert.strictEqual(isIcoRunning, true, "it should be started"))
@@ -185,14 +186,14 @@ describe("ICO tests", () => {
    }) */
 
   it("should change the usdPerEth and check it", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.setUsdPerEthRate(60000, {from: owner}))
       .then(() => ico.usdPerEth())
       .then(uacTokensPerEth => assert.strictEqual(uacTokensPerEth.toString(10), "60000", "should be started"))
   })
 
   it("should start ico, pause it and then start it again", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.isIcoRunning())
       .then(isIcoRunning => assert.strictEqual(isIcoRunning, false, "it should not be started yet"))
       .then(() => ico.startICO({from: owner}))
@@ -207,7 +208,7 @@ describe("ICO tests", () => {
   })
 
   it("should not update token value", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.usdTokenPrice())
       .then(usdTokenPrice => assert.strictEqual(usdTokenPrice.toString(), "200", "should be 2 usd"))
       .then(() => ico.setUsdTokenPrice(1, {from: user})).should.be.rejected
@@ -216,7 +217,7 @@ describe("ICO tests", () => {
   })
 
   it("Should not get tokens before ICO is started", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.isIcoRunning())
       .then(isIcoRunning => assert(!isIcoRunning, "it should not be started yet"))
       .then(() => web3.eth.sendTransactionPromise({
@@ -227,7 +228,7 @@ describe("ICO tests", () => {
   })
 
   it("Should not get tokens before ICO is started", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.isIcoRunning())
       .then(isIcoRunning => assert(!isIcoRunning, "it should not be started yet"))
       .then(() => web3.eth.sendTransactionPromise({
@@ -238,7 +239,7 @@ describe("ICO tests", () => {
   })
 
   it("Should not get tokens after ICO started but before starting block", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.isIcoRunning())
       .then(isIcoRunning => assert(!isIcoRunning, "it should not be started yet"))
       .then(() => ico.startICO({from: owner}))
@@ -252,7 +253,7 @@ describe("ICO tests", () => {
   })
 
   it("Should not get tokens after starting block but before starting ICO", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.isIcoRunning())
       .then(isIcoRunning => assert(!isIcoRunning, "it should not be started yet"))
       .then(() => setBlockAndMine())
@@ -264,7 +265,7 @@ describe("ICO tests", () => {
   })
 
   it("should not buy tokens after ICO's finish time", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => web3.eth.getBlockNumberPromise())
       .then((number) => ico.setBlockNumberStart(number, {from: owner}))
@@ -279,7 +280,7 @@ describe("ICO tests", () => {
   })
 
   it("should buy 550 tokens with the fallback function", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.isIcoRunning())
       .then(isIcoRunning => assert(!isIcoRunning, "it should not be started yet"))
       .then(() => ico.startICO({from: owner}))
@@ -300,7 +301,7 @@ describe("ICO tests", () => {
   })
 
   it("should buy tokens, pause the ico, resume the ico and buy tokens again", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.isIcoRunning())
       .then(isIcoRunning => assert(!isIcoRunning, "it should not be started yet"))
       .then(() => ico.startICO({from: owner}))
@@ -341,7 +342,7 @@ describe("ICO tests", () => {
   })
 
   it("should reject a transaction of less than 100 finney", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => web3.eth.getBlockNumberPromise())
       .then((number) => ico.setBlockNumberStart(number, {from: owner}))
@@ -363,7 +364,7 @@ describe("ICO tests", () => {
   })
 
   it("should buy all tokens", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => web3.eth.getBlockNumberPromise())
       .then((number) => ico.setBlockNumberStart(number, {from: owner}))
@@ -386,7 +387,7 @@ describe("ICO tests", () => {
   })
 
   it("should buy all 15000000 tokens with overflow and payback of 2 ether", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => web3.eth.getBlockNumberPromise())
       .then((number) => ico.setBlockNumberStart(number, {from: owner}))
@@ -414,7 +415,7 @@ describe("ICO tests", () => {
   })
 
   it("should not be able to call the buyTokens() function", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => web3.eth.getBlockNumberPromise())
       .then((number) => ico.setBlockNumberStart(number, {from: owner}))
@@ -423,82 +424,12 @@ describe("ICO tests", () => {
   })
 
   it("should receive invalid PreSaleVestingAddress and then set the right one", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, "0x0")
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, "0x0", advisorsWallet)
       .then(() => ico.preSaleVestingAddress())
       .then(address => assert.strictEqual(address.toString(), "0x0000000000000000000000000000000000000000", "should be null"))
       .then(() => ico.setPreSaleVestingAddress(preSaleVesting.address, {from: owner}))
       .then(() => ico.preSaleVestingAddress())
       .then(address => assert.strictEqual(address.toString(), preSaleVesting.address, "should be preSaleVesting address"))
-  })
-
-  it("should reserve 1.25 tokens", () => {
-    var reservationContract
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
-      .then(() => ReservationContract.new({from: owner}))
-      .then(_reservationContract => reservationContract = _reservationContract)
-      .then(() => reservationContract.setIcoContractAddress(ico.address, {from: owner}))
-      .then(() => ico.setReservationContractAddress(reservationContract.address, {from: owner}))
-      .then(() => ico.getreservationContractsAddress(reservationContract.address))
-      .then(address => assert.strictEqual(address.toString(), "true", "should be true"))
-      .then(() => web3.eth.getBlockNumberPromise())
-      .then((number) => ico.setBlockNumberStart(number + 20, {from: owner}))
-      .then(() => reservationContract.getIcoBlockNumberStart({from: owner}))
-      .then(() => reservationContract.icoBlockNumberStart())
-      .then(number => reservationContract.setRCBlockNumberStart(number - 20, {from: owner}))
-      .then(() => ico.setUsdTokenPrice(100, {from: owner}))
-      .then(() => ico.setUsdPerEthRate(100, {from: owner}))
-      .then(() => web3.eth.sendTransactionPromise({
-        from: buyer,
-        to: reservationContract.address,
-        value: web3.toWei(1, "ether")
-      }))
-      .then(() => reservationContract.getReservedTokens(buyer, {from: buyer}))
-      .then(tokens => assert.strictEqual(tokens.toString(10), web3.toWei(1.25, "ether"), "should be 1.25 tokens"))
-      .then(() => ico.reservedTokens())
-      .then(tokens => assert.strictEqual(tokens.toString(10), web3.toWei(1.25, "ether"), "should be 1.25 tokens"))
-      .then(() => ico.getTotalCollectedWei())
-      .then(wei => assert.strictEqual(wei.toString(10), web3.toWei(1, "ether"), "should be 1 ether"))
-  })
-
-  it("should reserve 1.25 tokens, wait the ico to start and withdraw them", () => {
-    var reservationContract
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
-      .then(() => ReservationContract.new({from: owner}))
-      .then(_reservationContract => reservationContract = _reservationContract)
-      .then(() => reservationContract.setIcoContractAddress(ico.address, {from: owner}))
-      .then(() => ico.setReservationContractAddress(reservationContract.address, {from: owner}))
-      .then(() => ico.getreservationContractsAddress(reservationContract.address))
-      .then(address => assert.strictEqual(address.toString(), "true", "should be true"))
-      .then(() => web3.eth.getBlockNumberPromise())
-      .then((number) => ico.setBlockNumberStart(number + 7, {from: owner}))
-      .then(() => reservationContract.getIcoBlockNumberStart({from: owner}))
-      .then(() => reservationContract.icoBlockNumberStart())
-      .then(number => reservationContract.setRCBlockNumberStart(number - 20, {from: owner}))
-      .then(() => ico.setUsdTokenPrice(100, {from: owner}))
-      .then(() => ico.setUsdPerEthRate(100, {from: owner}))
-      .then(() => web3.eth.sendTransactionPromise({
-        from: buyer,
-        to: reservationContract.address,
-        value: web3.toWei(1, "ether")
-      }))
-      .then(() => reservationContract.getReservedTokens(buyer, {from: buyer}))
-      .then(tokens => assert.strictEqual(tokens.toString(10), web3.toWei(1.25, "ether"), "should be 1.25 tokens"))
-      .then(() => ico.reservedTokens())
-      .then(tokens => assert.strictEqual(tokens.toString(10), web3.toWei(1.25, "ether"), "should be 1.25 tokens"))
-      .then(() => ico.getTotalCollectedWei())
-      .then(wei => assert.strictEqual(wei.toString(10), web3.toWei(1, "ether"), "should be 1 ether"))
-      .then(() => mineBlock())
-      .then(() => reservationContract.withdrawTokens({from: buyer}))
-      .then(() => reservationContract.getReservedTokens(buyer, {from: buyer}))
-      .then(tokens => assert.strictEqual(tokens.toString(10), web3.toWei(0, "ether"), "should be 0 tokens after withdrawal"))
-      .then(() => ico.reservedTokens())
-      .then(tokens => assert.strictEqual(tokens.toString(10), web3.toWei(0, "ether"), "should be 0 tokens"))
-      .then(() => ico.getTotalCollectedWei())
-      .then(wei => assert.strictEqual(wei.toString(10), web3.toWei(1, "ether"), "should be 1 ether"))
-      .then(() => ico.icoTokensSold())
-      .then(tokens => assert.strictEqual(tokens.toString(10), web3.toWei(1.25, "ether"), "should be 1.25 tokens sold"))
-      .then(() => uac.balanceOf(buyer, {from: buyer}))
-      .then(tokens => assert.strictEqual(tokens.toString(10), web3.toWei(1.25, "ether"), "should be 1.25 tokens of buyer"))
   })
 
 

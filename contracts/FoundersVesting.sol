@@ -1,7 +1,5 @@
 pragma solidity ^0.4.18;
 
-// Maps account addresses and balances from PreSale
-
 import "./SafeMath.sol";
 import "./Owned.sol";
 
@@ -9,9 +7,8 @@ contract UAC {
     function transfer(address _to, uint256 _value) public returns(bool);
 }
 
-contract PreSaleVesting is Owned
+contract FoundersVesting is Owned
 {
-
     using SafeMath for uint;
 
     bool public icoFinished = false;
@@ -61,6 +58,7 @@ contract PreSaleVesting is Owned
     }
 
     function setIcoContractAddress(address _icoContractAddress)
+    public
     onlyOwner
     {
         icoContractAddress = _icoContractAddress;
@@ -82,6 +80,7 @@ contract PreSaleVesting is Owned
 
     function withdrawTokens()
     public
+    onlyOwner
     onlyIcoFinished
     {
         amountToSend = 0;
@@ -97,7 +96,7 @@ contract PreSaleVesting is Owned
 
         currentBalance = currentBalance.sub(amountToSend);
 
-        uacToken.transfer(msg.sender, amountToSend);
+        uacToken.transfer(foundersTokenHolder, amountToSend);
 
         amountToSend = 0;
     }
