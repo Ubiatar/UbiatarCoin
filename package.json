@@ -9,6 +9,7 @@
     "test preSaleVesting": "mocha test/PreSaleVesting.js",
     "test ico": "mocha test/ICO.js",
     "test ubiatarPlay": "mocha test/ubiatarPlay.js",
+    "test foundersVesting": "mocha test/foundersVesting.js",
     "deploy": "truffle deploy",
     "compile": "rimraf build && truffle compile",
     "test all": "truffle test"

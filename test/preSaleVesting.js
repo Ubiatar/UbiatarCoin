@@ -88,7 +88,7 @@ const mineBlock = () => {
 
 
 describe("PreSaleVesting getters tests", () => {
-  var accounts, networkId, safeMath, preSaleVesting, uac, stdToken, owned, uacUnsold, foundersVesting, ico, ubiatarPlay
+  var accounts, networkId, safeMath, preSaleVesting, uac, stdToken, owned, uacUnsold, foundersVesting, ico, ubiatarPlay, advisorsWallet
   var owner, user, investor
 
   before("get accounts", () => {
@@ -106,6 +106,7 @@ describe("PreSaleVesting getters tests", () => {
         UbiatarPlay.setNetwork(networkId)
         owner = accounts[0]
         user = accounts[1]
+        advisorsWallet = accounts[2]
         investor = "0x7fe01ff0aDaF111A94ad0d69eD27cDe23553AF44";
       })
   })
@@ -148,7 +149,7 @@ describe("PreSaleVesting getters tests", () => {
   })
 
   beforeEach("deploy FounderVesting", () => {
-    return FoundersVesting.new(owner, uac.address, {from: owner})
+    return FoundersVesting.new(uac.address, {from: owner})
       .then(_foundersVesting => foundersVesting = _foundersVesting)
   })
 
@@ -163,29 +164,30 @@ describe("PreSaleVesting getters tests", () => {
       .then(_ubiatarPlay => ubiatarPlay = _ubiatarPlay)
   })
 
-  const ICODeploy = (uacAddress, uacUnsoldAddress, founderVestingAddress, preSaleVestingAddress, ubiatarPlayAddress) => {
-    return ICO.new(uacAddress, uacUnsoldAddress, founderVestingAddress, preSaleVestingAddress, ubiatarPlayAddress, {from: owner})
+  const ICODeploy = (uacAddress, uacUnsoldAddress, founderVestingAddress, preSaleVestingAddress, ubiatarPlayAddress, advisorsWallet) => {
+    return ICO.new(uacAddress, uacUnsoldAddress, founderVestingAddress, preSaleVestingAddress, ubiatarPlayAddress, advisorsWallet, {from: owner})
       .then(_ico => ico = _ico)
       .then(() => uac.setIcoContractAddress(ico.address, {from: owner}))
       .then(() => preSaleVesting.setIcoContractAddress(ico.address, {from: owner}))
       .then(() => ubiatarPlay.setIcoContractAddress(ico.address, {from: owner}))
+      .then(() => foundersVesting.setIcoContractAddress(ico.address, {from: owner}))
   }
 
   it("should get 0 initial reclaimable tokens", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => preSaleVesting.getReclaimableTokens(investor, {from: investor}))
       .then(tokens => assert.strictEqual(tokens.toString(10), '0', "should be 0"))
   })
 
   it("should get investor's initial balance", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => preSaleVesting.getInitialBalance(investor, {from: investor}))
       .then(tokens => assert.strictEqual(tokens.toString(10), '266955000000000513888375', "should be 266955000000000513888375"))
   })
 
   it("should get investor's first threshold tokens ", () => {
     var actualBalance;
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => ico.setIcoFinishTime(0, {from: owner}))
       .then(() => ico.finishICO({from: owner}))
@@ -198,7 +200,7 @@ describe("PreSaleVesting getters tests", () => {
 
   it("should get investor's reclaimable tokens after 127 days", () => {
     var actualBalance;
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => ico.setIcoFinishTime(0, {from: owner}))
       .then(() => ico.finishICO({from: owner}))
@@ -211,7 +213,7 @@ describe("PreSaleVesting getters tests", () => {
 
   it("should get investor's reclaimable tokens after 128 days", () => {
     var actualBalance;
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => ico.setIcoFinishTime(0, {from: owner}))
       .then(() => ico.finishICO({from: owner}))
@@ -228,7 +230,7 @@ describe("PreSaleVesting getters tests", () => {
 
   it("should get investor's reclaimable tokens after 110 days", () => {
     var actualBalance;
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => ico.setIcoFinishTime(0, {from: owner}))
       .then(() => ico.finishICO({from: owner}))
@@ -245,7 +247,7 @@ describe("PreSaleVesting getters tests", () => {
 
   it("should get investor's locked tokens at first threshold", () => {
     var actualBalance;
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => ico.setIcoFinishTime(0, {from: owner}))
       .then(() => ico.finishICO({from: owner}))
@@ -260,7 +262,7 @@ describe("PreSaleVesting getters tests", () => {
   })
 
   it("should get all investor's tokens", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => ico.setIcoFinishTime(0, {from: owner}))
       .then(() => ico.finishICO({from: owner}))
@@ -273,7 +275,7 @@ describe("PreSaleVesting getters tests", () => {
   })
 
   it("should have 17584778551358900100698693 tokens", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => uac.balanceOf(preSaleVesting.address))
       .then(tokens => assert.strictEqual(tokens.toString(10), "17584778551358900100698693", "should be equal"))
@@ -281,7 +283,7 @@ describe("PreSaleVesting getters tests", () => {
 })
 
 describe("PreSaleVesting withdraw function test", () => {
-  var accounts, networkId, safeMath, preSaleVestingTest, uac, stdToken, owned, uacUnsold, foundersVesting, ico, ubiatarPlay
+  var accounts, networkId, safeMath, preSaleVestingTest, uac, stdToken, owned, uacUnsold, foundersVesting, ico, ubiatarPlay, advisorsWallet
   var owner, user, investor, fakeInvestor
 
   before("get accounts", () => {
@@ -342,7 +344,7 @@ describe("PreSaleVesting withdraw function test", () => {
   })
 
   beforeEach("deploy FounderVesting", () => {
-    return FoundersVesting.new(owner, uac.address, {from: owner})
+    return FoundersVesting.new(uac.address, {from: owner})
       .then(_foundersVesting => foundersVesting = _foundersVesting)
   })
 
@@ -356,21 +358,22 @@ describe("PreSaleVesting withdraw function test", () => {
       .then(_ubiatarPlay => ubiatarPlay = _ubiatarPlay)
   })
 
-  const ICODeploy = (uacAddress, uacUnsoldAddress, founderVestingAddress, preSaleVestingTestAddress, ubiatarPlayAddress) => {
-    return ICO.new(uacAddress, uacUnsoldAddress, founderVestingAddress, preSaleVestingTestAddress, ubiatarPlayAddress, {from: owner})
+  const ICODeploy = (uacAddress, uacUnsoldAddress, founderVestingAddress, preSaleVestingTestAddress, ubiatarPlayAddress, advisorsWallet) => {
+    return ICO.new(uacAddress, uacUnsoldAddress, founderVestingAddress, preSaleVestingTestAddress, ubiatarPlayAddress, advisorsWallet, {from: owner})
       .then(_ico => ico = _ico)
       .then(() => uac.setIcoContractAddress(ico.address, {from: owner}))
       .then(() => preSaleVestingTest.setIcoContractAddress(ico.address, {from: owner}))
       .then(() => ubiatarPlay.setIcoContractAddress(ico.address, {from: owner}))
+      .then(() => foundersVesting.setIcoContractAddress(ico.address, {from: owner}))
   }
 
   it("should add a new investor", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVestingTest.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVestingTest.address, ubiatarPlay.address, advisorsWallet)
       .then(() => preSaleVestingTest.addNewInvestor(investor, web3.toWei(1200000, "ether"), {from: owner}))
   })
 
   it("should add a new investor and get its balances before ico finish", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVestingTest.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVestingTest.address, ubiatarPlay.address, advisorsWallet)
       .then(() => preSaleVestingTest.addNewInvestor(fakeInvestor, web3.toWei(1200000, "ether"), {from: owner}))
       .then(() => preSaleVestingTest.getInitialBalance(fakeInvestor, {from: fakeInvestor}))
       .then(tokens => assert.strictEqual(tokens.toString(10), web3.toWei(1200000, "ether"), "should be equal"))
@@ -383,7 +386,7 @@ describe("PreSaleVesting withdraw function test", () => {
   })
 
   it("should add a new investor and withdraw 400000 tokens", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVestingTest.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVestingTest.address, ubiatarPlay.address, advisorsWallet)
       .then(() => preSaleVestingTest.addNewInvestor(fakeInvestor, web3.toWei(1200000, "ether"), {from: owner}))
       .then(() => ico.startICO({from: owner}))
       .then(() => ico.setIcoFinishTime(0, {from: owner}))
@@ -405,7 +408,7 @@ describe("PreSaleVesting withdraw function test", () => {
   })
 
   it("should add a new investor and withdraw 400000 tokens, then wait 360 days and withdraw all remaining tokens", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVestingTest.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVestingTest.address, ubiatarPlay.address, advisorsWallet)
       .then(() => preSaleVestingTest.addNewInvestor(fakeInvestor, web3.toWei(1200000, "ether"), {from: owner}))
       .then(() => ico.startICO({from: owner}))
       .then(() => ico.setIcoFinishTime(0, {from: owner}))

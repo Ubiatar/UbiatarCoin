@@ -3,7 +3,7 @@ pragma solidity ^0.4.18;
 import "./SafeMath.sol";
 import "./Owned.sol";
 
-contract UAC {
+contract UACAC {
     function transfer(address _to, uint256 _value) public returns(bool);
 }
 
@@ -23,7 +23,7 @@ contract FoundersVesting is Owned
 
     uint public lastWithdrawTime;
 
-    UAC public uacToken;
+    UACAC public uacToken;
 
     uint public currentBalance = 12000000 * 1 ether;
 
@@ -33,9 +33,9 @@ contract FoundersVesting is Owned
     {
         require(_uacTokenAddress != 0x0);
 
-        uacToken = UAC(_uacTokenAddress);
+        uacToken = UACAC(_uacTokenAddress);
         uacTokenAddress = _uacTokenAddress;
-        balanceFraction = ((currentBalance.mul(1 ether)).div(360 days)).div(1 ether);
+        balanceFraction = ((currentBalance.mul(1 ether)).div(360)).div(1 ether);
     }
 
     modifier byIcoContract()
@@ -54,7 +54,7 @@ contract FoundersVesting is Owned
     public
     byIcoContract
     {
-        lastWithdrawTime.add(360 days);
+        lastWithdrawTime=uint(now).add(360 days);
         icoFinished = true;
     }
 
@@ -69,7 +69,7 @@ contract FoundersVesting is Owned
     onlyOwner
     {
         uacTokenAddress = _uacTokenAddress;
-        uacToken = UAC(_uacTokenAddress);
+        uacToken = UACAC(_uacTokenAddress);
     }
 
     function setFoundersTokenHolder(address _foundersTokenHolder)

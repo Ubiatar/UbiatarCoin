@@ -3,7 +3,7 @@ pragma solidity ^0.4.18;
 import "./SafeMath.sol";
 import "./Owned.sol";
 
-contract UAC {
+contract UACAC {
     function lockTransfer(bool _lock);
 
     function issueTokens(address _who, uint _tokens);
@@ -11,16 +11,16 @@ contract UAC {
     function balanceOf(address _owner) public constant returns (uint256);
 }
 
-contract PreSaleVesting {
-    function icoFinished();
+contract PreSaleVestingAC {
+    function finishIco();
 }
 
 contract FoundersVestingAC {
     function finishIco() public;
 }
 
-contract UbiatarPlay {
-    function icoFinished();
+contract UbiatarPlayAC {
+    function finishIco();
 }
 
 // This is the main UbiatarCoin ICO smart contract
@@ -29,8 +29,6 @@ contract ICO is Owned {
     using SafeMath for uint;
 
     address[] public multisigs;
-
-    uint public reservedTokens = 0;
 
     uint collectedWei = 0;
 
@@ -49,7 +47,7 @@ contract ICO is Owned {
     // 15 000 000 tokens sold during the ICO
     uint public constant ICO_TOKEN_SUPPLY_LIMIT = 15000000 * 1 ether;
     // Tokens for advisors
-    uint public constant ADVISORS_TOKENS = 4915221448641099899301307 * 1 ether;
+    uint public constant ADVISORS_TOKENS = 4915221448641099899301307;
     // 50 500 000 tokens for Ubiatar Play
     uint public constant UBIATARPLAY_TOKENS = 50500000 * 1 ether;
 
@@ -82,13 +80,13 @@ contract ICO is Owned {
 
     address public advisorsWalletAddress = 0x0;
 
-    UAC public uacToken;
+    UACAC public uacToken;
 
-    PreSaleVesting public preSaleVesting;
+    PreSaleVestingAC public preSaleVesting;
 
     FoundersVestingAC public foundersVesting;
 
-    UbiatarPlay public ubiatarPlay;
+    UbiatarPlayAC public ubiatarPlay;
 
     enum State
     {
@@ -131,7 +129,7 @@ contract ICO is Owned {
 
     modifier canFinishICO()
     {
-        require((uint(now) >= icoFinishTime) || (icoTokensSold + reservedTokens == ICO_TOKEN_SUPPLY_LIMIT));
+        require((uint(now) >= icoFinishTime) || (icoTokensSold == ICO_TOKEN_SUPPLY_LIMIT));
         _;
     }
 
@@ -155,10 +153,10 @@ contract ICO is Owned {
         address _advisorsWalletAddress
     )
     {
-        uacToken = UAC(_uacTokenAddress);
-        preSaleVesting = PreSaleVesting(_preSaleVestingAddress);
+        uacToken = UACAC(_uacTokenAddress);
+        preSaleVesting = PreSaleVestingAC(_preSaleVestingAddress);
         foundersVesting = FoundersVestingAC(_foundersVestingAddress);
-        ubiatarPlay = UbiatarPlay(_ubiatarPlayAddress);
+        ubiatarPlay = UbiatarPlayAC(_ubiatarPlayAddress);
 
         uacTokenAddress = _uacTokenAddress;
         unsoldContractAddress = _unsoldContractAddress;
@@ -215,8 +213,8 @@ contract ICO is Owned {
             uacToken.issueTokens(unsoldContractAddress, icoTokensUnsold);
         }
 
-        preSaleVesting.icoFinished();
-        ubiatarPlay.icoFinished();
+        preSaleVesting.finishIco();
+        ubiatarPlay.finishIco();
         foundersVesting.finishIco();
 
         // Should be changed to our desired method of storing ether
@@ -263,9 +261,11 @@ contract ICO is Owned {
     {
         require(msg.value >= 100 finney);
 
+        
+
         uint newTokens = (msg.value * getUacTokensPerEth(bonusPercent)) / 1 ether;
 
-        if ((icoTokensSold + reservedTokens + newTokens) <= ICO_TOKEN_SUPPLY_LIMIT)
+        if ((icoTokensSold + newTokens) <= ICO_TOKEN_SUPPLY_LIMIT)
         {
             issueTokensInternal(_buyer, newTokens);
 
@@ -315,7 +315,7 @@ contract ICO is Owned {
     onlyInState(State.Init)
     {
         ubiatarPlayAddress = _ubiatarPlayAddress;
-        ubiatarPlay = UbiatarPlay(_ubiatarPlayAddress);
+        ubiatarPlay = UbiatarPlayAC(_ubiatarPlayAddress);
     }
 
     function setUacTokenAddress(address _uacTokenAddress)
@@ -324,7 +324,7 @@ contract ICO is Owned {
     onlyInState(State.Init)
     {
         uacTokenAddress = _uacTokenAddress;
-        uacToken = UAC(_uacTokenAddress);
+        uacToken = UACAC(_uacTokenAddress);
     }
 
     function setUnsoldContractAddress(address _unsoldContractAddress)
@@ -350,7 +350,7 @@ contract ICO is Owned {
     onlyInState(State.Init)
     {
         preSaleVestingAddress = _preSaleVestingAddress;
-        preSaleVesting = PreSaleVesting(_preSaleVestingAddress);
+        preSaleVesting = PreSaleVestingAC(_preSaleVestingAddress);
     }
 
     function setBlockNumberStart(uint _blockNumber)
@@ -443,7 +443,7 @@ contract ICO is Owned {
     public
     returns (bool)
     {
-        return (currentState == State.ICOFinished || icoTokensSold + reservedTokens >= ICO_TOKEN_SUPPLY_LIMIT);
+        return (currentState == State.ICOFinished || icoTokensSold >= ICO_TOKEN_SUPPLY_LIMIT);
     }
 
     function getUacTokensPerEth(uint bonusPercent)

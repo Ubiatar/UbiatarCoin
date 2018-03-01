@@ -29,7 +29,6 @@ const Owned = truffleContract(require(__dirname + "/../build/contracts/Owned.jso
 const ICO = truffleContract(require(__dirname + "/../build/contracts/ICO.json"))
 const UACUnsold = truffleContract(require(__dirname + "/../build/contracts/UACUnsold.json"))
 const FoundersVesting = truffleContract(require(__dirname + "/../build/contracts/FoundersVesting.json"))
-const ReservationContract = truffleContract(require(__dirname + "/../build/contracts/ReservationContract.json"))
 const UbiatarPlay = truffleContract(require(__dirname + "/../build/contracts/UbiatarPlay.json"))
 
 SafeMath.setProvider(web3.currentProvider)
@@ -40,7 +39,6 @@ Owned.setProvider(web3.currentProvider)
 ICO.setProvider(web3.currentProvider)
 UACUnsold.setProvider(web3.currentProvider)
 FoundersVesting.setProvider(web3.currentProvider)
-ReservationContract.setProvider(web3.currentProvider)
 UbiatarPlay.setProvider(web3.currentProvider)
 
 
@@ -87,7 +85,7 @@ const mineBlock = () => {
 
 
 describe("ICO tests", () => {
-  var accounts, networkId, safeMath, preSaleVesting, uac, stdToken, owned, uacUnsold, foundersVesting, ico, ubiatarPlay
+  var accounts, networkId, safeMath, preSaleVesting, uac, stdToken, owned, uacUnsold, foundersVesting, ico, ubiatarPlay, advisorsWallet
   var owner, user, ubiatarAccount
 
   before("get accounts", () => {
@@ -106,6 +104,7 @@ describe("ICO tests", () => {
         owner = accounts[0]
         user = accounts[1]
         ubiatarAccount = accounts[2]
+        advisorsWallet = accounts[3]
       })
   })
 
@@ -149,7 +148,7 @@ describe("ICO tests", () => {
   })
 
   beforeEach("deploy FounderVesting", () => {
-    return FoundersVesting.new(owner, uac.address, {from: owner})
+    return FoundersVesting.new(uac.address, {from: owner})
       .then(_foundersVesting => foundersVesting = _foundersVesting)
   })
 
@@ -163,12 +162,13 @@ describe("ICO tests", () => {
       .then(_ubiatarPlay => ubiatarPlay = _ubiatarPlay)
   })
 
-  const ICODeploy = (uacAddress, uacUnsoldAddress, founderVestingAddress, preSaleVestingAddress, ubiatarPlayAddress) => {
-    return ICO.new(uacAddress, uacUnsoldAddress, founderVestingAddress, preSaleVestingAddress, ubiatarPlayAddress, {from: owner})
+  const ICODeploy = (uacAddress, uacUnsoldAddress, founderVestingAddress, preSaleVestingAddress, ubiatarPlayAddress, advisorsWallet) => {
+    return ICO.new(uacAddress, uacUnsoldAddress, founderVestingAddress, preSaleVestingAddress, ubiatarPlayAddress, advisorsWallet, {from: owner})
       .then(_ico => ico = _ico)
       .then(() => uac.setIcoContractAddress(ico.address, {from: owner}))
       .then(() => preSaleVesting.setIcoContractAddress(ico.address, {from: owner}))
       .then(() => ubiatarPlay.setIcoContractAddress(ico.address, {from: owner}))
+      .then(() => foundersVesting.setIcoContractAddress(ico.address, {from: owner}))
   }
 
  /* it("should start the ICO", () => {
@@ -179,7 +179,7 @@ describe("ICO tests", () => {
   })*/
 
  it("should start with 50500000 tokens", () => {
-   return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+   return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
      .then(() => ico.startICO({from: owner}))
      .then(() => ubiatarPlay.currentBalance())
      .then(tokens => assert.strictEqual(tokens.toString(10), web3.toWei(50500000, "ether"), "should be 50500000 tokens"))
@@ -188,7 +188,7 @@ describe("ICO tests", () => {
  })
 
  it("should withdraw tokens after 3 months", () => {
-   return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+   return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
      .then(() => ico.startICO({from: owner}))
      .then(() => ico.setIcoFinishTime(0, {from: owner}))
      .then(() => ico.finishICO({from: owner}))
@@ -206,7 +206,7 @@ describe("ICO tests", () => {
  })
 
   it("should withdraw tokens after 9 months", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => ico.setIcoFinishTime(0, {from: owner}))
       .then(() => ico.finishICO({from: owner}))
@@ -228,7 +228,7 @@ describe("ICO tests", () => {
   })
 
   it("should withdraw all tokens", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => ico.setIcoFinishTime(0, {from: owner}))
       .then(() => ico.finishICO({from: owner}))
@@ -244,7 +244,7 @@ describe("ICO tests", () => {
   })
 
   it("should withdraw tokens after 3 months ad again after 12", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => ico.setIcoFinishTime(0, {from: owner}))
       .then(() => ico.finishICO({from: owner}))
@@ -278,7 +278,7 @@ describe("ICO tests", () => {
   })
 
   it("should withdraw tokens after 3 months and try immediately after", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address)
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => ico.setIcoFinishTime(0, {from: owner}))
       .then(() => ico.finishICO({from: owner}))

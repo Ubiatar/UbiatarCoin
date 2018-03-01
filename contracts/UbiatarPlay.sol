@@ -2,7 +2,10 @@ pragma solidity ^0.4.18;
 
 import "./Owned.sol";
 import "./SafeMath.sol";
-import "./UAC.sol";
+
+contract UACAC {
+    function transfer(address _to, uint256 _value) public returns(bool);
+}
 
 contract UbiatarPlay is Owned{
 
@@ -18,7 +21,7 @@ contract UbiatarPlay is Owned{
 
     address public ubiatarPlayTokenHolder = 0x0;
 
-    UAC public uacToken;
+    UACAC public uacToken;
 
     uint public currentBalance = 50500000 * 1 ether;
 
@@ -42,11 +45,11 @@ contract UbiatarPlay is Owned{
     }
 
     function UbiatarPlay(address _uacTokenAddress){
-        uacToken = UAC(_uacTokenAddress);
+        uacToken = UACAC(_uacTokenAddress);
         uacTokenAddress = _uacTokenAddress;
     }
 
-    function icoFinished()
+    function finishIco()
     byIcoContract
     {
         startingTime = uint(now);
@@ -65,7 +68,7 @@ contract UbiatarPlay is Owned{
     onlyOwner
     {
         uacTokenAddress = _uacTokenAddress;
-        uacToken = UAC(_uacTokenAddress);
+        uacToken = UACAC(_uacTokenAddress);
     }
 
     function setubiatarPlayTokenHolder(address _ubiatarPlayTokenHolder)

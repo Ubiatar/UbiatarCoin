@@ -5,7 +5,7 @@ pragma solidity ^0.4.18;
 import "./SafeMath.sol";
 import "./Owned.sol";
 
-contract UAC {
+contract UACAC {
     function transfer(address _to, uint256 _value) public returns(bool);
 }
 
@@ -34,7 +34,7 @@ contract PreSaleVestingTest is Owned
     mapping(address => Investor) investors;
 
 
-    UAC public uacToken;
+    UACAC public uacToken;
 
     function PreSaleVestingTest(address _uacTokenAddress)
     {
@@ -99,7 +99,8 @@ contract PreSaleVestingTest is Owned
         investors[address(0x6b3C5AeEB11A2dB76E60E2a27Dd929c35Ca0B323)].initialBalance = 2405000000000004629625;
         investors[address(0xCb8aB95570c9DFd16b0995f9fe4AA0BDe0C749Aa)].initialBalance = 27657500000000053240687;
 
-        uacToken = UAC(_uacTokenAddress);
+        uacToken = UACAC(_uacTokenAddress);
+        uacTokenAddress = _uacTokenAddress;
     }
 
     modifier byIcoContract()
@@ -114,7 +115,7 @@ contract PreSaleVestingTest is Owned
         _;
     }
 
-    function icoFinished()
+    function finishIco()
     byIcoContract
     {
         firstThreshold = uint(now).add(7 days);
@@ -132,7 +133,7 @@ contract PreSaleVestingTest is Owned
     onlyOwner
     {
         uacTokenAddress = _uacTokenAddress;
-        uacToken = UAC(_uacTokenAddress);
+        uacToken = UACAC(_uacTokenAddress);
     }
 
     function withdrawTokens()
