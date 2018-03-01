@@ -109,6 +109,12 @@ describe("ICO tests", () => {
       })
   })
 
+ /* before("deploy ICOEngineInterface", () => {
+    return ICOEngineInterface.new({from: owner})
+      .then(_icoEngineInterface => icoEngineInterface = _icoEngineInterface)
+      .then(() => ICO.link({ICOEngineInterface: icoEngineInterface.address}))
+  })*/
+
   before("deploy Owned", () => {
     return Owned.new({from: owner})
       .then(_owned => owned = _owned)
@@ -281,7 +287,7 @@ describe("ICO tests", () => {
 
   })
 
-  it("should buy 550 tokens with the fallback function", () => {
+  it("should buy 594 tokens with the fallback function", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.isIcoRunning())
       .then(isIcoRunning => assert(!isIcoRunning, "it should not be started yet"))
@@ -455,12 +461,197 @@ describe("ICO tests", () => {
       .then(b => assert.strictEqual(b.toString(), "594594594594594594594", "should be 594 tokens"))
       .then(() => ico.setUbiatarColdWallet(ubiatarColdWallet, {from: owner}))
       .then(() => ico.setIcoFinishTime(0, {from: owner}))
-      .then(() => ico.finishICO({from: owner}))
+      .then(() => ico.withdraw(web3.toWei(1, "ether"), {from: owner}))
       .then(() => increaseTime(1))
       .then(() => web3.eth.getBalancePromise(ubiatarColdWallet))
       .then(b => assert.strictEqual(b.toString(), web3.toWei(101, "ether"), "should be 101 ether"))
   })
 
 
+})
+
+describe("ICOEngineInterface tests", () => {
+  var accounts, networkId, safeMath, preSaleVesting, uac, stdToken, owned, uacUnsold, foundersVesting, ico, ubiatarPlay
+  var owner, user, buyer, advisorsWallet, ubiatarColdWallet
+
+  before("get accounts", () => {
+    return web3.eth.getAccountsPromise()
+      .then(_accounts => accounts = _accounts)
+      .then(() => web3.version.getNetworkPromise())
+      .then(_networkId => {
+        networkId = _networkId
+        ICO.setNetwork(networkId)
+        PreSaleVesting.setNetwork(networkId)
+        UAC.setNetwork(networkId)
+        StdToken.setNetwork(networkId)
+        FoundersVesting.setNetwork(networkId)
+        UACUnsold.setNetwork(networkId)
+        UbiatarPlay.setNetwork(networkId)
+        owner = accounts[0]
+        user = accounts[1]
+        buyer = accounts[2]
+        advisorsWallet = accounts[3]
+        ubiatarColdWallet = accounts[4]
+      })
+  })
+
+  /* before("deploy ICOEngineInterface", () => {
+     return ICOEngineInterface.new({from: owner})
+       .then(_icoEngineInterface => icoEngineInterface = _icoEngineInterface)
+       .then(() => ICO.link({ICOEngineInterface: icoEngineInterface.address}))
+   })*/
+
+  before("deploy Owned", () => {
+    return Owned.new({from: owner})
+      .then(_owned => owned = _owned)
+      .then(() => ICO.link({Owned: owned.address}))
+      .then(() => UAC.link({Owned: owned.address}))
+      .then(() => UACUnsold.link({Owned: owned.address}))
+      .then(() => FoundersVesting.link({Owned: owned.address}))
+      .then(() => PreSaleVesting.link({Owned: owned.address}))
+      .then(() => UbiatarPlay.link({Owned: owned.address}))
+  })
+
+  before("deploy SafeMath", () => {
+    return SafeMath.new({from: owner})
+      .then(_safeMath => safeMath = _safeMath)
+      .then(() => PreSaleVesting.link({SafeMath: safeMath.address}))
+      .then(() => ICO.link({SafeMath: safeMath.address}))
+      .then(() => UAC.link({SafeMath: safeMath.address}))
+      .then(() => StdToken.link({SafeMath: safeMath.address}))
+      .then(() => FoundersVesting.link({SafeMath: safeMath.address}))
+      .then(() => UACUnsold.link({SafeMath: safeMath.address}))
+      .then(() => UbiatarPlay.link({SafeMath: safeMath.address}))
+  })
+
+  before("deploy StdToken", () => {
+    return StdToken.new({from: owner})
+      .then(_stdToken => stdToken = _stdToken)
+      .then(() => UAC.link({StdToken: stdToken.address}))
+  })
+
+  beforeEach("deploy UAC", () => {
+    return UAC.new({from: owner})
+      .then(_uac => uac = _uac)
+  })
+
+  before("deploy UACUnsold", () => {
+    return UACUnsold.new({from: owner})
+      .then(_uacUnsold => uacUnsold = _uacUnsold)
+  })
+
+  beforeEach("deploy FoundersVesting", () => {
+    return FoundersVesting.new(uac.address, {from: owner})
+      .then(_foundersVesting => foundersVesting = _foundersVesting)
+    // .then(console.log(foundersVesting))
+  })
+
+  beforeEach("deploy PreSaleVesting", () => {
+    return PreSaleVesting.new(uac.address, {from: owner})
+      .then(_preSaleVesting => preSaleVesting = _preSaleVesting)
+    // .then(console.log(preSaleVesting))
+  })
+
+  beforeEach("deploy UbiatarPlay", () => {
+    return UbiatarPlay.new(uac.address, {from: owner})
+      .then(_ubiatarPlay => ubiatarPlay = _ubiatarPlay)
+  })
+
+  const ICODeploy = (uacAddress, uacUnsoldAddress, foundersVestingAddress, preSaleVestingAddress, ubiatarPlayAddress, advisorsWallet) => {
+    return ICO.new(uacAddress, uacUnsoldAddress, foundersVestingAddress, preSaleVestingAddress, ubiatarPlayAddress, advisorsWallet, {from: owner})
+      .then(_ico => ico = _ico)
+      .then(() => uac.setIcoContractAddress(ico.address, {from: owner}))
+      .then(() => preSaleVesting.setIcoContractAddress(ico.address, {from: owner}))
+      .then(() => ubiatarPlay.setIcoContractAddress(ico.address, {from: owner}))
+      .then(() => foundersVesting.setIcoContractAddress(ico.address, {from: owner}))
+  }
+
+  it("should not be started in init state", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.started())
+      .then(s => assert.strictEqual(s.toString(), "false", "should be false"))
+  })
+
+  it("should be started in running state", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.startICO({from: owner}))
+      .then(() => ico.started())
+      .then(s => assert.strictEqual(s.toString(), "true", "should be true"))
+  })
+
+  it("should not be started in finished state", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.startICO({from: owner}))
+      .then(() => ico.setIcoFinishTime(0, {from: owner}))
+      .then(() => ico.finishICO({from: owner}))
+      .then(() => ico.started())
+      .then(s => assert.strictEqual(s.toString(), "true", "should be true"))
+  })
+
+  it("should not be ended if the ico is not started", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.ended())
+      .then(s => assert.strictEqual(s.toString(), "false", "should be false"))
+  })
+
+  it("should not be ended if the ico is running or paused", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.startICO({from: owner}))
+      .then(() => ico.ended())
+      .then(s => assert.strictEqual(s.toString(), "false", "should be false"))
+      .then(() => ico.pauseICO({from: owner}))
+      .then(() => ico.ended())
+      .then(s => assert.strictEqual(s.toString(), "false", "should be false"))
+  })
+
+  it("should be ended if the ico is finished", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.startICO({from: owner}))
+      .then(() => ico.setIcoFinishTime(0, {from: owner}))
+      .then(() => ico.finishICO({from: owner}))
+      .then(() => ico.ended())
+      .then(s => assert.strictEqual(s.toString(), "true", "should be true"))
+  })
+
+  it("should return 15000000 total tokens for the ico", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.totalTokens())
+      .then(tokens => assert.strictEqual(tokens.toString(10), web3.toWei(15000000, "ether"), "should 15000000 tokens"))
+  })
+
+  it("should return 15000000 total remaining tokens before the startt of the ico", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.remainingTokens())
+      .then(tokens => assert.strictEqual(tokens.toString(10), web3.toWei(15000000, "ether"), "should 15000000 tokens"))
+  })
+
+  it("should buy 594 tokens and get remaining tokens", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.isIcoRunning())
+      .then(isIcoRunning => assert(!isIcoRunning, "it should not be started yet"))
+      .then(() => ico.startICO({from: owner}))
+      .then(() => ico.isIcoRunning())
+      .then(isIcoRunning => assert(isIcoRunning, "it should be started"))
+      .then(() => web3.eth.getBlockNumberPromise())
+      .then((number) => ico.setBlockNumberStart(number, {from: owner}))
+      .then(() => mineBlock())
+      .then(() => web3.eth.sendTransactionPromise({
+        from: buyer,
+        to: ico.address,
+        value: web3.toWei(1, "ether")
+      }))
+      .then(() => ico.icoTokensSold())
+      .then(t => assert.strictEqual(t.toString(), "594594594594594594594", "should be 594 tokens"))
+      .then(() => uac.balanceOf(buyer))
+      .then(b => assert.strictEqual(b.toString(), "594594594594594594594", "should be 594 tokens"))
+      .then(() => ico.remainingTokens())
+      .then(tokens => assert.strictEqual(tokens.toString(10), "14999405405405405405405406", "should 15000000 tokens"))
+  })
+
+  it("should get 594 tokens per eth", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.price())
+      .then(tokens => assert.strictEqual(tokens.toString(10), "594594594594594594594", "should be 594 tokens"))
+  })
 })
 
