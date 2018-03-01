@@ -80,6 +80,8 @@ contract ICO is Owned {
 
     address public advisorsWalletAddress = 0x0;
 
+    address public ubiatarColdWallet = 0x0;
+
     UACAC public uacToken;
 
     PreSaleVestingAC public preSaleVesting;
@@ -217,26 +219,7 @@ contract ICO is Owned {
         ubiatarPlay.finishIco();
         foundersVesting.finishIco();
 
-        // Should be changed to our desired method of storing ether
-        // 3 - send all ETH to multisigs
-        // we have N separate multisigs for extra security
-        /*    uint sendThisAmount = (this.balance / 10);
-
-            // 3.1 - send to 9 multisigs
-            for (uint i = 0; i < 9; ++i) {
-                address ms = multisigs[i];
-
-                if (this.balance >= sendThisAmount) {
-                    ms.transfer(sendThisAmount);
-                }
-            }
-
-            // 3.2 - send everything left to 10th multisig
-            if (0 != this.balance) {
-                address lastMs = multisigs[9];
-                lastMs.transfer(this.balance);
-            }
-            */
+        ubiatarColdWallet.transfer(this.balance);
     }
 
     function refund()
@@ -253,7 +236,7 @@ contract ICO is Owned {
         LogRefund(_toBeRefund, _refundAmount);
     }
 
-    function buyTokens(address _buyer, uint bonusPercent)
+    function buyTokens(address _buyer)
     internal
     onlyInState(State.ICORunning)
     onlyBeforeIcoFinishTime
@@ -261,7 +244,22 @@ contract ICO is Owned {
     {
         require(msg.value >= 100 finney);
 
-        
+        uint bonusPercent = 0;
+
+        if(block.number < icoBlockNumberStart + 10164)
+        {
+            bonusPercent = 4;
+        }
+
+        if(block.number < icoBlockNumberStart + 2541)
+        {
+            bonusPercent = 6;
+        }
+
+        if(block.number < icoBlockNumberStart + 635)
+        {
+            bonusPercent = 8;
+        }
 
         uint newTokens = (msg.value * getUacTokensPerEth(bonusPercent)) / 1 ether;
 
@@ -300,6 +298,13 @@ contract ICO is Owned {
     }
 
     //Setters
+
+    function setUbiatarColdWallet(address _ubiatarColdWallet)
+    public
+    onlyOwner
+    {
+        ubiatarColdWallet =_ubiatarColdWallet;
+    }
 
     function setAdvisorsWalletAddress(address _advisorsWalletAddress)
     public
@@ -460,12 +465,12 @@ contract ICO is Owned {
     payable
     public {
         // buyTokens -> issueTokensInternal
-        buyTokens(_to, 0);
+        buyTokens(_to);
     }
 
     // Default fallback function
     function() payable {
         // buyTokens -> issueTokensInternal
-        buyTokens(msg.sender, 0);
+        buyTokens(msg.sender);
     }
 }
