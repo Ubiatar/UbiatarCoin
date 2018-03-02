@@ -15,22 +15,30 @@ contract UACAC {
 */
 contract UbiatarPlay is Ownable{
 
+    // SafeMath standard lib
     using SafeMath for uint;
 
+    // Flag that indicates if ICO is finished
     bool public icoFinished = false;
 
     uint public startingTime = 0;
 
+    // ICO contract address
     address public icoContractAddress = 0x0;
 
+    // UbiatrCoin Token contract address
     address public uacTokenAddress = 0x0;
 
+    // UbiatarPlay coldwallet
     address public ubiatarPlayTokenHolder = 0x0;
 
+    // UbiatarCoin contract reference
     UACAC public uacToken;
 
+    // UbiatarPlay account UAC balance
     uint public currentBalance = 50500000 * 1 ether;
 
+    // Token withdrawnable per months
     uint public withdrawMonths3 = 2000000 * 1 ether;
     uint public withdrawMonths6 = 4000000 * 1 ether;
     uint public withdrawMonths9 = 6000000 * 1 ether;
@@ -38,23 +46,29 @@ contract UbiatarPlay is Ownable{
     uint public withdrawMonths18 = 10000000 * 1 ether;
     uint public withdrawMonths24 = 20500000 * 1 ether;
 
+    /// Modifiers
+
+    // Only when ICO is finished
     modifier onlyIcoFinished()
     {
         require(icoFinished == true);
         _;
     }
 
+    // Only by ICO contract
     modifier byIcoContract()
     {
         require(msg.sender == icoContractAddress);
         _;
     }
 
+    // Contract constructor
     function UbiatarPlay(address _uacTokenAddress){
         uacToken = UACAC(_uacTokenAddress);
         uacTokenAddress = _uacTokenAddress;
     }
 
+    // Function called by ICO contract when it is finished
     function finishIco()
     byIcoContract
     {
@@ -62,6 +76,7 @@ contract UbiatarPlay is Ownable{
         icoFinished = true;
     }
 
+    // ICO contract address setter
     function setIcoContractAddress(address _icoContractAddress)
     public
     onlyOwner
@@ -69,6 +84,7 @@ contract UbiatarPlay is Ownable{
         icoContractAddress = _icoContractAddress;
     }
 
+    // UbiatarCoin Token contract address setter
     function setUacTokenAddress(address _uacTokenAddress)
     public
     onlyOwner
@@ -77,6 +93,7 @@ contract UbiatarPlay is Ownable{
         uacToken = UACAC(_uacTokenAddress);
     }
 
+    // UbiatarPlay account contract address setter
     function setubiatarPlayTokenHolder(address _ubiatarPlayTokenHolder)
     public
     onlyOwner
@@ -84,6 +101,7 @@ contract UbiatarPlay is Ownable{
         ubiatarPlayTokenHolder = _ubiatarPlayTokenHolder;
     }
 
+    // UbiatarPlay UAC Token withdraw function based on timestamp
     function withdraw()
     public
     onlyIcoFinished
