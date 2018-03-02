@@ -86,7 +86,7 @@ const mineBlock = () => {
 
 describe("ICO tests", () => {
   var accounts, networkId, safeMath, preSaleVesting, uac, stdToken, owned, uacUnsold, foundersVesting, ico, ubiatarPlay
-  var owner, user, buyer, advisorsWallet, ubiatarColdWallet, buyer2, ubiatarColdWallet2, ubiatarColdWallet3
+  var owner, user, buyer, advisorsWallet, ubiatarColdWallet, buyer2, ubiatarColdWallet2, ubiatarColdWallet3, newOwner
 
   before("get accounts", () => {
     return web3.eth.getAccountsPromise()
@@ -109,6 +109,7 @@ describe("ICO tests", () => {
         buyer2 = accounts[5]
         ubiatarColdWallet2 = accounts[6]
         ubiatarColdWallet3 = accounts[7]
+        newOwner = accounts[8]
       })
   })
 
@@ -116,9 +117,9 @@ describe("ICO tests", () => {
     return ICOEngineInterface.new({from: owner})
       .then(_icoEngineInterface => icoEngineInterface = _icoEngineInterface)
       .then(() => ICO.link({ICOEngineInterface: icoEngineInterface.address}))
-  })*/
+  })
 
-  before("deploy Owned", () => {
+  /*before("deploy Owned", () => {
     return Owned.new({from: owner})
       .then(_owned => owned = _owned)
       .then(() => ICO.link({Owned: owned.address}))
@@ -141,7 +142,7 @@ describe("ICO tests", () => {
       .then(() => UbiatarPlay.link({SafeMath: safeMath.address}))
   })
 
- /* before("deploy StdToken", () => {
+   before("deploy StdToken", () => {
     return StdToken.new({from: owner})
       .then(_stdToken => stdToken = _stdToken)
       .then(() => UAC.link({StdToken: stdToken.address}))
@@ -182,6 +183,24 @@ describe("ICO tests", () => {
       .then(() => ubiatarPlay.setIcoContractAddress(ico.address, {from: owner}))
       .then(() => foundersVesting.setIcoContractAddress(ico.address, {from: owner}))
   }
+
+  it("should change ICO's ownership", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.owner())
+      .then(address => assert.strictEqual(address, owner, "should be owner"))
+      .then(() => ico.transferOwnership(newOwner, {from: owner}))
+      .then(() => ico.owner())
+      .then(address => assert.strictEqual(address, newOwner, "should be newOwner"))
+  })
+
+  it("should not change ICO's ownership", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.owner())
+      .then(address => assert.strictEqual(address, owner, "should be owner"))
+      .then(() => ico.transferOwnership(newOwner, {from: newOwner})).should.be.rejected
+      .then(() => ico.owner())
+      .then(address => assert.strictEqual(address, owner, "should be owner"))
+  })
 
   it("should start the ICO", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)

@@ -1,9 +1,9 @@
 pragma solidity ^0.4.18;
 
 import "../node_modules/zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
-import "./Owned.sol";
+import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
 
-contract UAC is StandardToken, Owned
+contract UAC is StandardToken, Ownable
 {
 
     using SafeMath for uint;
@@ -47,7 +47,7 @@ contract UAC is StandardToken, Owned
     function UAC()
     {
         require(TOTAL_TOKEN_SUPPLY == 100000000 * 1 ether);
-        require(TOTAL_ICO_SUPPLY + TOTAL_PRESALE_SUPPLY + TOTAL_ADVISORS_SUPPLY + TOTAL_UBIATARPLAY_SUPPLY + TOTAL_FOUNDERS_SUPPLY == TOTAL_TOKEN_SUPPLY);
+        require(TOTAL_ICO_SUPPLY.add(TOTAL_PRESALE_SUPPLY).add(TOTAL_ADVISORS_SUPPLY).add(TOTAL_UBIATARPLAY_SUPPLY).add(TOTAL_FOUNDERS_SUPPLY) == TOTAL_TOKEN_SUPPLY);
     }
 
     /// @dev Override
