@@ -40,8 +40,6 @@ contract ICO is Owned, ICOEngineInterface {
 
     using SafeMath for uint;
 
-    address[] public multisigs;
-
     uint collectedWei = 0;
 
     // Standard token price is 200 dollar CENTS per token
@@ -231,6 +229,7 @@ contract ICO is Owned, ICOEngineInterface {
     public
     onlyOwner
     {
+        require(ubiatarColdWallet != 0x0);
         if(withdrawAmount > this.balance) {
             withdrawAmount = this.balance;
         }
@@ -330,7 +329,7 @@ contract ICO is Owned, ICOEngineInterface {
     function issueTokensInternal(address _to, uint _tokens)
     internal
     {
-        require((icoTokensSold + icoTokensSold + _tokens) <= ICO_TOKEN_SUPPLY_LIMIT);
+        require((icoTokensSold + _tokens) <= ICO_TOKEN_SUPPLY_LIMIT);
 
         uacToken.issueTokens(_to, _tokens);
         icoTokensSold += _tokens;
