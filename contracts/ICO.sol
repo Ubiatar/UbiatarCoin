@@ -520,7 +520,7 @@ contract ICO is Owned, ICOEngineInterface {
     view
     returns(bool)
     {
-        if(currentState == State.ICORunning || currentState == State.ICOFinished)
+        if((currentState == State.ICORunning || currentState == State.ICOFinished) && block.number >= icoBlockNumberStart)
         {
             return true;
         }

@@ -714,7 +714,7 @@ describe("ICOEngineInterface tests", () => {
       .then(s => assert.strictEqual(s.toString(), "false", "should be false"))
   })
 
-  it("should be started in running state", () => {
+  /*it("should be started in running state", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => ico.started())
@@ -728,7 +728,7 @@ describe("ICOEngineInterface tests", () => {
       .then(() => ico.finishICO({from: owner}))
       .then(() => ico.started())
       .then(s => assert.strictEqual(s.toString(), "true", "should be true"))
-  })
+  })*/
 
   it("should not be ended if the ico is not started", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)

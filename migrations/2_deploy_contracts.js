@@ -16,5 +16,4 @@ module.exports = function(deployer) {
     deployer.link(SafeMath, PreSaleVesting);
     deployer.link(UAC, PreSaleVesting)
         .then(() =>  deployer.deploy(PreSaleVesting, UAC.address))
-
 };
