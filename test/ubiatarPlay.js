@@ -21,21 +21,15 @@ const should = chai.should()
 
 const truffleContract = require("truffle-contract")
 
-const SafeMath = truffleContract(require(__dirname + "/../build/contracts/SafeMath.json"))
 const PreSaleVesting = truffleContract(require(__dirname + "/../build/contracts/PreSaleVesting.json"))
 const UAC = truffleContract(require(__dirname + "/../build/contracts/UAC.json"))
-const StdToken = truffleContract(require(__dirname + "/../build/contracts/StdToken.json"))
-const Owned = truffleContract(require(__dirname + "/../build/contracts/Owned.json"))
 const ICO = truffleContract(require(__dirname + "/../build/contracts/ICO.json"))
 const UACUnsold = truffleContract(require(__dirname + "/../build/contracts/UACUnsold.json"))
 const FoundersVesting = truffleContract(require(__dirname + "/../build/contracts/FoundersVesting.json"))
 const UbiatarPlay = truffleContract(require(__dirname + "/../build/contracts/UbiatarPlay.json"))
 
-SafeMath.setProvider(web3.currentProvider)
-StdToken.setProvider(web3.currentProvider)
 PreSaleVesting.setProvider(web3.currentProvider)
 UAC.setProvider(web3.currentProvider)
-Owned.setProvider(web3.currentProvider)
 ICO.setProvider(web3.currentProvider)
 UACUnsold.setProvider(web3.currentProvider)
 FoundersVesting.setProvider(web3.currentProvider)
@@ -85,7 +79,7 @@ const mineBlock = () => {
 
 
 describe("ICO tests", () => {
-  var accounts, networkId, safeMath, preSaleVesting, uac, stdToken, owned, uacUnsold, foundersVesting, ico, ubiatarPlay, advisorsWallet
+  var accounts, networkId, preSaleVesting, uac, uacUnsold, foundersVesting, ico, ubiatarPlay, advisorsWallet
   var owner, user, ubiatarAccount
 
   before("get accounts", () => {
@@ -97,7 +91,6 @@ describe("ICO tests", () => {
         ICO.setNetwork(networkId)
         PreSaleVesting.setNetwork(networkId)
         UAC.setNetwork(networkId)
-        StdToken.setNetwork(networkId)
         FoundersVesting.setNetwork(networkId)
         UACUnsold.setNetwork(networkId)
         UbiatarPlay.setNetwork(networkId)
@@ -106,35 +99,6 @@ describe("ICO tests", () => {
         ubiatarAccount = accounts[2]
         advisorsWallet = accounts[3]
       })
-  })
-
-  before("deploy Owned", () => {
-    return Owned.new({from: owner})
-      .then(_owned => owned = _owned)
-      .then(() => ICO.link({Owned: owned.address}))
-      .then(() => UAC.link({Owned: owned.address}))
-      .then(() => UACUnsold.link({Owned: owned.address}))
-      .then(() => FoundersVesting.link({Owned: owned.address}))
-      .then(() => PreSaleVesting.link({Owned: owned.address}))
-      .then(() => UbiatarPlay.link({Owned: owned.address}))
-  })
-
-  before("deploy SafeMath", () => {
-    return SafeMath.new({from: owner})
-      .then(_safeMath => safeMath = _safeMath)
-      .then(() => PreSaleVesting.link({SafeMath: safeMath.address}))
-      .then(() => ICO.link({SafeMath: safeMath.address}))
-      .then(() => UAC.link({SafeMath: safeMath.address}))
-      .then(() => StdToken.link({SafeMath: safeMath.address}))
-      .then(() => FoundersVesting.link({SafeMath: safeMath.address}))
-      .then(() => UACUnsold.link({SafeMath: safeMath.address}))
-      .then(() => UbiatarPlay.link({SafeMath: safeMath.address}))
-  })
-
-  before("deploy StdToken", () => {
-    return StdToken.new({from: owner})
-      .then(_stdToken => stdToken = _stdToken)
-      .then(() => UAC.link({StdToken: stdToken.address}))
   })
 
   beforeEach("deploy UAC", () => {
@@ -295,8 +259,5 @@ describe("ICO tests", () => {
       .then(tokens => assert.strictEqual(tokens.toString(10), web3.toWei(2000000, "ether"), "should have 2000000 tokens in UAC"))
       .then(() => ubiatarPlay.withdraw({from: owner})).should.be.rejected
   })
-
-
-
 })
 
