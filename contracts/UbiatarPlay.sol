@@ -3,10 +3,16 @@ pragma solidity ^0.4.18;
 import "./Owned.sol";
 import "./SafeMath.sol";
 
+// UbiatarCoin Abstract Contract
 contract UACAC {
     function transfer(address _to, uint256 _value) public returns(bool);
 }
 
+/*
+    UbiatarPlay contract wallet
+    50.5% of UAC will be withdrawn here
+    Token will be withdraws in slices after 3-6-9-12-18-24 months
+*/
 contract UbiatarPlay is Owned{
 
     using SafeMath for uint;

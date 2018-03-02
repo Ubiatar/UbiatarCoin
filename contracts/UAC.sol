@@ -3,18 +3,24 @@ pragma solidity ^0.4.18;
 import "../node_modules/zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "./Owned.sol";
 
+/*
+    UbiatarCoin token contract.
+*/
 contract UAC is StandardToken, Owned
 {
-
+    // SafeMath standard lib
     using SafeMath for uint;
     // Fields:
     string public constant name = "Ubiatar Coin";
     string public constant symbol = "UAC";
     uint public constant decimals = 18;
 
+    // ICO contract address
     address public icoContractAddress = 0x0;
+    // Bool to lock UAC transfers before ICO end
     bool public lockTransfers = false;
 
+    // total UAC token supply
     uint public constant TOTAL_TOKEN_SUPPLY = 100000000 * 1 ether;
     // total ICO token supply
     uint public constant TOTAL_ICO_SUPPLY = 15000000 * 1 ether;
@@ -29,13 +35,16 @@ contract UAC is StandardToken, Owned
 
     /// Modifiers:
 
+    // Enable use only by ICO contract
     modifier byIcoContract()
     {
         require(msg.sender == icoContractAddress);
         _;
     }
 
-    // Setters/Getters
+    /// Setters/Getters
+
+    // This function sets the ICO contract address
     function setIcoContractAddress(address _icoContractAddress)
     public
     onlyOwner
@@ -43,7 +52,9 @@ contract UAC is StandardToken, Owned
         icoContractAddress = _icoContractAddress;
     }
 
-    // Functions:
+    /// Functions:
+
+    // UAC Constructor
     function UAC()
     {
         require(TOTAL_TOKEN_SUPPLY == 100000000 * 1 ether);
@@ -68,6 +79,7 @@ contract UAC is StandardToken, Owned
         return super.transferFrom(_from,_to,_value);
     }
 
+    // It creates new token and it can be called only by ICO contract
     function issueTokens(address _who, uint _tokens)
     byIcoContract
     {
@@ -79,7 +91,7 @@ contract UAC is StandardToken, Owned
         Transfer(0x0, _who, _tokens);
     }
 
-    // For refunds only
+    // It burns tokens updating total supply
     function burnTokens(address _who, uint _tokens)
     byIcoContract
     {
@@ -87,13 +99,14 @@ contract UAC is StandardToken, Owned
         totalSupply_ = totalSupply_.sub(_tokens);
     }
 
+    // It enables or disables token transfers
     function lockTransfer(bool _lock)
     byIcoContract
     {
         lockTransfers = _lock;
     }
 
-    // Do not allow to send money directly to this contract
+    // It disallows to send money directly to this contract
     function() {
         revert();
     }
