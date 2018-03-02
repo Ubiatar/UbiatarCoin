@@ -30,6 +30,7 @@ contract FoundersVesting is Owned
     uint public balanceFraction;
 
     function FoundersVesting(address _uacTokenAddress)
+    public
     {
         require(_uacTokenAddress != 0x0);
 
@@ -66,6 +67,7 @@ contract FoundersVesting is Owned
     }
 
     function setUacTokenAddress(address _uacTokenAddress)
+    public
     onlyOwner
     {
         uacTokenAddress = _uacTokenAddress;

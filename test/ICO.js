@@ -86,7 +86,7 @@ const mineBlock = () => {
 
 describe("ICO tests", () => {
   var accounts, networkId, safeMath, preSaleVesting, uac, stdToken, owned, uacUnsold, foundersVesting, ico, ubiatarPlay
-  var owner, user, buyer, advisorsWallet, ubiatarColdWallet
+  var owner, user, buyer, advisorsWallet, ubiatarColdWallet, buyer2, ubiatarColdWallet2, ubiatarColdWallet3
 
   before("get accounts", () => {
     return web3.eth.getAccountsPromise()
@@ -106,6 +106,9 @@ describe("ICO tests", () => {
         buyer = accounts[2]
         advisorsWallet = accounts[3]
         ubiatarColdWallet = accounts[4]
+        buyer2 = accounts[5]
+        ubiatarColdWallet2 = accounts[6]
+        ubiatarColdWallet3 = accounts[7]
       })
   })
 
@@ -371,22 +374,22 @@ describe("ICO tests", () => {
       .then(t => assert.strictEqual(t.toString(10), "59459459459459459459", "should be 59 tokens"))
   })
 
-  /*it("should buy all tokens", () => {
+  it("should buy all tokens", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.isIcoRunning())
+      .then(isIcoRunning => assert(!isIcoRunning, "it should not be started yet"))
       .then(() => ico.startICO({from: owner}))
+      .then(() => ico.isIcoRunning())
+      .then(isIcoRunning => assert(isIcoRunning, "it should be started"))
       .then(() => web3.eth.getBlockNumberPromise())
       .then((number) => ico.setBlockNumberStart(number, {from: owner}))
       .then(() => mineBlock())
-      .then(() => ico.setUsdPerEthRate(1388888, {from: owner}))
-      .then(() => ico.usdPerEth())
-      .then(u => assert.strictEqual(u.toString(10), "1388888", "should be 1388888"))
-      .then(() => ico.setUsdTokenPrice(1, {from: owner}))
-      .then(() => ico.usdTokenPrice())
-      .then(u => assert.strictEqual(u.toString(10), "1", "should be 1"))
+      .then(() => ico.setUsdTokenPrice(216, {from: owner}))
+      .then(() => ico.setUsdPerEthRate(3000000000, {from: owner}))
       .then(() => web3.eth.sendTransactionPromise({
         from: buyer,
         to: ico.address,
-        value: web3.toWei(5, "ether")
+        value: web3.toWei(1, "ether")
       }))
       .then(() => ico.icoTokensSold())
       .then(t => assert.strictEqual(t.toString(10), web3.toWei(15000000, "ether"), "should be 15000000 tokens"))
@@ -400,19 +403,19 @@ describe("ICO tests", () => {
       .then(() => web3.eth.getBlockNumberPromise())
       .then((number) => ico.setBlockNumberStart(number, {from: owner}))
       .then(() => mineBlock())
-      .then(() => ico.setUsdPerEthRate(1500000, {from: owner}))
-      .then(() => ico.setUsdTokenPrice(1, {from: owner}))
+      .then(() => ico.setUsdPerEthRate(3000000000, {from: owner}))
+      .then(() => ico.setUsdTokenPrice(216, {from: owner}))
       .then(() => web3.eth.sendTransactionPromise({
         from: buyer,
         to: ico.address,
-        value: web3.toWei(12, "ether")
+        value: web3.toWei(2, "ether")
       }))
       .then(() => ico.icoTokensSold())
-      .then(t => assert.strictEqual(t.toString(10), web3.toWei(15000000, "ether"), "should be 15000000 tokens"))
+      .then(t => assert.strictEqual(t.toString(10), web3.toWei(15000000, "ether"), "should be 15000000 tokens sold"))
       .then(() => uac.balanceOf(buyer))
-      .then(b => assert.strictEqual(b.toString(10), web3.toWei(15000000, "ether"), "should be 15000000 tokens"))
+      .then(b => assert.strictEqual(b.toString(10), web3.toWei(15000000, "ether"), "should be 15000000 tokens bought"))
       .then(() => ico.refundAmount())
-      .then(amount => assert.strictEqual(amount.toString(10), web3.toWei(2, "ether"), "should be 2 ether"))
+      .then(amount => assert.strictEqual(amount.toString(10), web3.toWei(1, "ether"), "should be 1 ether"))
       .then(() => ico.toBeRefund())
       .then(address => assert.strictEqual(address.toString(10), buyer, "should be buyer"))
       .then(() => ico.refund({from: owner}))
@@ -420,7 +423,7 @@ describe("ICO tests", () => {
       .then(amount => assert.strictEqual(amount.toString(10), web3.toWei(0, "ether"), "should be 0 ether"))
       .then(() => ico.toBeRefund())
       .then(address => assert.strictEqual(address.toString(10), "0x0000000000000000000000000000000000000000", "should be null"))
-  })*/
+  })
 
   it("should not be able to call the buyTokens() function", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
@@ -440,7 +443,7 @@ describe("ICO tests", () => {
       .then(address => assert.strictEqual(address.toString(), preSaleVesting.address, "should be preSaleVesting address"))
   })
 
-  it("should buy 550 tokens and check ubiatarColdWallet balance", () => {
+  it("should buy 594 tokens and check ubiatarColdWallet balance", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.isIcoRunning())
       .then(isIcoRunning => assert(!isIcoRunning, "it should not be started yet"))
@@ -467,6 +470,145 @@ describe("ICO tests", () => {
       .then(b => assert.strictEqual(b.toString(), web3.toWei(101, "ether"), "should be 101 ether"))
   })
 
+  it("should buy ether from 2 different accounts and withdraw 2 times", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.isIcoRunning())
+      .then(isIcoRunning => assert(!isIcoRunning, "it should not be started yet"))
+      .then(() => ico.startICO({from: owner}))
+      .then(() => ico.isIcoRunning())
+      .then(isIcoRunning => assert(isIcoRunning, "it should be started"))
+      .then(() => web3.eth.getBlockNumberPromise())
+      .then((number) => ico.setBlockNumberStart(number, {from: owner}))
+      .then(() => mineBlock())
+      .then(() => ico.setUsdTokenPrice(216, {from: owner}))
+      .then(() => ico.setUsdPerEthRate(30000000, {from: owner}))
+      .then(() => web3.eth.sendTransactionPromise({
+        from: buyer,
+        to: ico.address,
+        value: web3.toWei(10, "ether")
+      }))
+      .then(() => web3.eth.sendTransactionPromise({
+        from: buyer2,
+        to: ico.address,
+        value: web3.toWei(10, "ether")
+      }))
+      .then(() => ico.icoTokensSold())
+      .then(t => assert.strictEqual(t.toString(10), web3.toWei(3000000, "ether"), "should be 3000000 tokens sold"))
+      .then(() => uac.balanceOf(buyer))
+      .then(b => assert.strictEqual(b.toString(10), web3.toWei(1500000, "ether"), "should be 1500000 tokens bought by buyer"))
+      .then(() => uac.balanceOf(buyer2))
+      .then(b => assert.strictEqual(b.toString(10), web3.toWei(1500000, "ether"), "should be 1500000 tokens bought by buyer2"))
+      .then(() => ico.setUbiatarColdWallet(ubiatarColdWallet2, {from:owner}))
+      .then(() => ico.withdraw(web3.toWei(10, "ether"), {from:owner}))
+      .then(() => web3.eth.getBalancePromise(ubiatarColdWallet2))
+      .then(b => assert.strictEqual(b.toString(), web3.toWei(110, "ether"), "should be 110 ether in ubiatarColdWallet2"))
+      .then(() => web3.eth.getBalancePromise(ico.address))
+      .then(b => assert.strictEqual(b.toString(), web3.toWei(10, "ether"), "should be 10 ether remaining"))
+      .then(() => ico.withdraw(web3.toWei(10, "ether"), {from:owner}))
+      .then(() => web3.eth.getBalancePromise(ubiatarColdWallet2))
+      .then(b => assert.strictEqual(b.toString(), web3.toWei(120, "ether"), "should be 120 ether in ubiatarColdWallet2"))
+      .then(() => web3.eth.getBalancePromise(ico.address))
+      .then(b => assert.strictEqual(b.toString(), web3.toWei(0, "ether"), "should be 0 ether remaining"))
+  })
+
+  it("should buy ether from 2 different accounts and withdraw more than current ICO balance", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.isIcoRunning())
+      .then(isIcoRunning => assert(!isIcoRunning, "it should not be started yet"))
+      .then(() => ico.startICO({from: owner}))
+      .then(() => ico.isIcoRunning())
+      .then(isIcoRunning => assert(isIcoRunning, "it should be started"))
+      .then(() => web3.eth.getBlockNumberPromise())
+      .then((number) => ico.setBlockNumberStart(number, {from: owner}))
+      .then(() => mineBlock())
+      .then(() => ico.setUsdTokenPrice(216, {from: owner}))
+      .then(() => ico.setUsdPerEthRate(30000000, {from: owner}))
+      .then(() => web3.eth.sendTransactionPromise({
+        from: buyer,
+        to: ico.address,
+        value: web3.toWei(10, "ether")
+      }))
+      .then(() => web3.eth.sendTransactionPromise({
+        from: buyer2,
+        to: ico.address,
+        value: web3.toWei(10, "ether")
+      }))
+      .then(() => ico.icoTokensSold())
+      .then(t => assert.strictEqual(t.toString(10), web3.toWei(3000000, "ether"), "should be 3000000 tokens sold"))
+      .then(() => uac.balanceOf(buyer))
+      .then(b => assert.strictEqual(b.toString(10), web3.toWei(1500000, "ether"), "should be 1500000 tokens bought by buyer"))
+      .then(() => uac.balanceOf(buyer2))
+      .then(b => assert.strictEqual(b.toString(10), web3.toWei(1500000, "ether"), "should be 1500000 tokens bought by buyer2"))
+      .then(() => ico.setUbiatarColdWallet(ubiatarColdWallet3, {from:owner}))
+      .then(() => ico.withdraw(web3.toWei(10, "ether"), {from:owner}))
+      .then(() => web3.eth.getBalancePromise(ubiatarColdWallet3))
+      .then(b => assert.strictEqual(b.toString(), web3.toWei(110, "ether"), "should be 110 ether in ubiatarColdWallet3 first time"))
+      .then(() => web3.eth.getBalancePromise(ico.address))
+      .then(b => assert.strictEqual(b.toString(), web3.toWei(10, "ether"), "should be 10 ether remaining"))
+      .then(() => ico.withdraw(web3.toWei(30, "ether"), {from:owner}))
+      .then(() => web3.eth.getBalancePromise(ubiatarColdWallet3))
+      .then(b => assert.strictEqual(b.toString(), web3.toWei(120, "ether"), "should be 120 ether in ubiatarColdWallet3 second time"))
+      .then(() => web3.eth.getBalancePromise(ico.address))
+      .then(b => assert.strictEqual(b.toString(), web3.toWei(0, "ether"), "should be 0 ether remaining"))
+  })
+
+  it("should buy all tokens and then try buying some more tokens", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.startICO({from: owner}))
+      .then(() => web3.eth.getBlockNumberPromise())
+      .then((number) => ico.setBlockNumberStart(number, {from: owner}))
+      .then(() => mineBlock())
+      .then(() => ico.setUsdTokenPrice(216, {from: owner}))
+      .then(() => ico.setUsdPerEthRate(3000000000, {from: owner}))
+      .then(() => web3.eth.sendTransactionPromise({
+        from: buyer,
+        to: ico.address,
+        value: web3.toWei(1, "ether")
+      }))
+      .then(() => ico.icoTokensSold())
+      .then(t => assert.strictEqual(t.toString(10), web3.toWei(15000000, "ether"), "should be 15000000 tokens"))
+      .then(() => uac.balanceOf(buyer))
+      .then(b => assert.strictEqual(b.toString(10), web3.toWei(15000000, "ether"), "should be 15000000 tokens"))
+      .then(() => web3.eth.sendTransactionPromise({
+        from: buyer2,
+        to: ico.address,
+        value: web3.toWei(1000, "finney")
+      })).should.be.rejected
+  })
+
+  it("should buy ether, finish ico and check UacUnsold balance", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.isIcoRunning())
+      .then(isIcoRunning => assert(!isIcoRunning, "it should not be started yet"))
+      .then(() => ico.startICO({from: owner}))
+      .then(() => ico.isIcoRunning())
+      .then(isIcoRunning => assert(isIcoRunning, "it should be started"))
+      .then(() => web3.eth.getBlockNumberPromise())
+      .then((number) => ico.setBlockNumberStart(number, {from: owner}))
+      .then(() => mineBlock())
+      .then(() => ico.setUsdTokenPrice(216, {from: owner}))
+      .then(() => ico.setUsdPerEthRate(30000000, {from: owner}))
+      .then(() => web3.eth.sendTransactionPromise({
+        from: buyer,
+        to: ico.address,
+        value: web3.toWei(10, "ether")
+      }))
+      .then(() => web3.eth.sendTransactionPromise({
+        from: buyer2,
+        to: ico.address,
+        value: web3.toWei(10, "ether")
+      }))
+      .then(() => ico.icoTokensSold())
+      .then(t => assert.strictEqual(t.toString(10), web3.toWei(3000000, "ether"), "should be 3000000 tokens sold"))
+      .then(() => uac.balanceOf(buyer))
+      .then(b => assert.strictEqual(b.toString(10), web3.toWei(1500000, "ether"), "should be 1500000 tokens bought by buyer"))
+      .then(() => uac.balanceOf(buyer2))
+      .then(b => assert.strictEqual(b.toString(10), web3.toWei(1500000, "ether"), "should be 1500000 tokens bought by buyer2"))
+      .then(() => ico.setIcoFinishTime(0, {from: owner}))
+      .then(() => ico.finishICO({from: owner}))
+      .then(() => uac.balanceOf(uacUnsold.address))
+      .then(t => assert.strictEqual(t.toString(10), web3.toWei(12000000, "ether"), "should be 12000000 tokens unsold"))
+  })
 
 })
 

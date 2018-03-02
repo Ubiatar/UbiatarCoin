@@ -47,7 +47,8 @@ contract UAC is StdToken, Owned
     // Functions:
     function UAC()
     {
-        assert(TOTAL_TOKEN_SUPPLY == 100000000 * 1 ether);
+        require(TOTAL_TOKEN_SUPPLY == 100000000 * 1 ether);
+        require(TOTAL_ICO_SUPPLY + TOTAL_PRESALE_SUPPLY + TOTAL_ADVISORS_SUPPLY + TOTAL_UBIATARPLAY_SUPPLY + TOTAL_FOUNDERS_SUPPLY == TOTAL_TOKEN_SUPPLY);
     }
 
     /// @dev Override

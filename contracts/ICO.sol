@@ -16,9 +16,9 @@ contract ICOEngineInterface{
 }
 
 contract UACAC {
-    function lockTransfer(bool _lock);
+    function lockTransfer(bool _lock) public;
 
-    function issueTokens(address _who, uint _tokens);
+    function issueTokens(address _who, uint _tokens) public;
 
     function balanceOf(address _owner) public constant returns (uint256);
 }
@@ -154,6 +154,21 @@ contract ICO is Owned, ICOEngineInterface {
     event LogWithdraw(address to, uint value);
     event LogOverflow(address to, uint value);
     event LogRefund(address to, uint value);
+    event LogUbiatarColdWalletSet(address ubiatarColdWallet);
+    event LogAdvisorsWalletAddressSet(address advisorsWalletAddress);
+    event LogUbiatarPlayAddressSet(address ubiatarPlayAddress);
+    event LogUacTokenAddressSet(address uacTokenAddress);
+    event LogUnsoldContractAddressSet(address unsoldContractAddress);
+    event LogFoundersVestingAddressSet(address foundersVestingAddress);
+    event LogPreSaleVestingAddressSet(address preSaleVestingAddress);
+    event LogBlockNumberStartSet(uint icoBlockNumberStart);
+    event LogIcoFinishTimeSet(uint icoFinishTime);
+    event LogUsdPerEthRateSet(uint usdPerEth);
+    event LogUsdTokenPrice(uint usdTokenPrice);
+    event LogStartICO();
+    event LogPauseICO();
+    event LogResumeICO();
+    event LogFinishICO();
 
     // Functions:
     /// @dev Constructor
@@ -191,6 +206,7 @@ contract ICO is Owned, ICOEngineInterface {
         uacToken.issueTokens(preSaleVestingAddress, PRESALE_REWARD);
         uacToken.issueTokens(advisorsWalletAddress, ADVISORS_TOKENS);
         uacToken.issueTokens(ubiatarPlayAddress, UBIATARPLAY_TOKENS);
+        LogStartICO();
     }
 
     function pauseICO()
@@ -199,6 +215,7 @@ contract ICO is Owned, ICOEngineInterface {
     onlyInState(State.ICORunning)
     {
         setState(State.ICOPaused);
+        LogPauseICO();
     }
 
     function resumeICO()
@@ -207,12 +224,16 @@ contract ICO is Owned, ICOEngineInterface {
     onlyInState(State.ICOPaused)
     {
         setState(State.ICORunning);
+        LogResumeICO();
     }
 
     function withdraw(uint withdrawAmount)
     public
     onlyOwner
     {
+        if(withdrawAmount > this.balance) {
+            withdrawAmount = this.balance;
+        }
         ubiatarColdWallet.transfer(withdrawAmount);
         LogWithdraw(ubiatarColdWallet, withdrawAmount);
     }
@@ -233,11 +254,13 @@ contract ICO is Owned, ICOEngineInterface {
         icoTokensUnsold = ICO_TOKEN_SUPPLY_LIMIT.sub(icoTokensSold);
         if (icoTokensUnsold > 0) {
             uacToken.issueTokens(unsoldContractAddress, icoTokensUnsold);
+            LogBurn(unsoldContractAddress, icoTokensUnsold);
         }
 
         preSaleVesting.finishIco();
         ubiatarPlay.finishIco();
         foundersVesting.finishIco();
+        LogFinishICO();
     }
 
     function refund()
@@ -322,6 +345,7 @@ contract ICO is Owned, ICOEngineInterface {
     onlyOwner
     {
         ubiatarColdWallet =_ubiatarColdWallet;
+        LogUbiatarColdWalletSet(ubiatarColdWallet);
     }
 
     function setAdvisorsWalletAddress(address _advisorsWalletAddress)
@@ -330,6 +354,7 @@ contract ICO is Owned, ICOEngineInterface {
     onlyInState(State.Init)
     {
         advisorsWalletAddress = _advisorsWalletAddress;
+        LogAdvisorsWalletAddressSet(advisorsWalletAddress);
     }
 
     function setUbiatarPlayAddress(address _ubiatarPlayAddress)
@@ -339,6 +364,7 @@ contract ICO is Owned, ICOEngineInterface {
     {
         ubiatarPlayAddress = _ubiatarPlayAddress;
         ubiatarPlay = UbiatarPlayAC(_ubiatarPlayAddress);
+        LogUbiatarPlayAddressSet(ubiatarPlayAddress);
     }
 
     function setUacTokenAddress(address _uacTokenAddress)
@@ -348,6 +374,7 @@ contract ICO is Owned, ICOEngineInterface {
     {
         uacTokenAddress = _uacTokenAddress;
         uacToken = UACAC(_uacTokenAddress);
+        LogUacTokenAddressSet(uacTokenAddress);
     }
 
     function setUnsoldContractAddress(address _unsoldContractAddress)
@@ -356,6 +383,7 @@ contract ICO is Owned, ICOEngineInterface {
     onlyInState(State.Init)
     {
         unsoldContractAddress = _unsoldContractAddress;
+        LogUnsoldContractAddressSet(unsoldContractAddress);
     }
 
     function setFoundersVestingAddress(address _foundersVestingAddress)
@@ -365,6 +393,7 @@ contract ICO is Owned, ICOEngineInterface {
     {
         foundersVestingAddress = _foundersVestingAddress;
         foundersVesting = FoundersVestingAC(_foundersVestingAddress);
+        LogFoundersVestingAddressSet(foundersVestingAddress);
     }
 
     function setPreSaleVestingAddress(address _preSaleVestingAddress)
@@ -374,6 +403,7 @@ contract ICO is Owned, ICOEngineInterface {
     {
         preSaleVestingAddress = _preSaleVestingAddress;
         preSaleVesting = PreSaleVestingAC(_preSaleVestingAddress);
+        LogPreSaleVestingAddressSet(preSaleVestingAddress);
     }
 
     function setBlockNumberStart(uint _blockNumber)
@@ -381,6 +411,7 @@ contract ICO is Owned, ICOEngineInterface {
     onlyOwner
     {
         icoBlockNumberStart = _blockNumber;
+        LogBlockNumberStartSet(icoBlockNumberStart);
     }
 
     function setIcoFinishTime(uint _time)
@@ -388,6 +419,7 @@ contract ICO is Owned, ICOEngineInterface {
     onlyOwner
     {
         icoFinishTime = _time;
+        LogIcoFinishTimeSet(icoFinishTime);
     }
 
     function setUsdPerEthRate(uint _usdPerEthRate)
@@ -395,6 +427,7 @@ contract ICO is Owned, ICOEngineInterface {
     onlyOwner
     {
         usdPerEth = _usdPerEthRate;
+        LogUsdPerEthRateSet(usdPerEth);
     }
 
     function setState(State _s)
@@ -409,6 +442,7 @@ contract ICO is Owned, ICOEngineInterface {
     onlyOwner
     {
         usdTokenPrice = tokenPrice;
+        LogUsdTokenPrice(usdTokenPrice);
     }
 
     // Getters
