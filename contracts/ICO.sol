@@ -1,7 +1,7 @@
 pragma solidity ^0.4.18;
 
-import "./SafeMath.sol";
-import "./Owned.sol";
+import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract ICOEngineInterface{
     function started() public view returns(bool);
@@ -36,7 +36,7 @@ contract UbiatarPlayAC {
 }
 
 // This is the main UbiatarCoin ICO smart contract
-contract ICO is Owned, ICOEngineInterface {
+contract ICO is Ownable, ICOEngineInterface {
 
     using SafeMath for uint;
 
@@ -301,9 +301,9 @@ contract ICO is Owned, ICOEngineInterface {
             bonusPercent = 8;
         }
 
-        uint newTokens = (msg.value * getUacTokensPerEth(bonusPercent)) / 1 ether;
+        uint newTokens = (msg.value * getUacTokensPerEth(bonusPercent)).div(1 ether);
 
-        if ((icoTokensSold + newTokens) <= ICO_TOKEN_SUPPLY_LIMIT)
+        if ((icoTokensSold.add(newTokens)) <= ICO_TOKEN_SUPPLY_LIMIT)
         {
             issueTokensInternal(_buyer, newTokens);
 
@@ -329,10 +329,10 @@ contract ICO is Owned, ICOEngineInterface {
     function issueTokensInternal(address _to, uint _tokens)
     internal
     {
-        require((icoTokensSold + _tokens) <= ICO_TOKEN_SUPPLY_LIMIT);
+        require((icoTokensSold.add(_tokens)) <= ICO_TOKEN_SUPPLY_LIMIT);
 
         uacToken.issueTokens(_to, _tokens);
-        icoTokensSold += _tokens;
+        icoTokensSold = icoTokensSold.add(_tokens);
 
         LogBuy(_to, _tokens);
     }
@@ -507,8 +507,8 @@ contract ICO is Owned, ICOEngineInterface {
     internal
     returns (uint)
     {
-        uint tokenPrice = (usdTokenPrice * 100) / (100 + bonusPercent);
-        uint uacPerEth = (usdPerEth * 1 ether) / tokenPrice;
+        uint tokenPrice = (usdTokenPrice.mul(100)).div(bonusPercent.add(100));
+        uint uacPerEth = (usdPerEth.mul(1 ether)).div(tokenPrice);
         return uacPerEth;
     }
 

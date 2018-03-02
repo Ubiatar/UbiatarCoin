@@ -1,7 +1,7 @@
 pragma solidity ^0.4.18;
 
-import "./Owned.sol";
-import "./SafeMath.sol";
+import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 
 // UbiatarCoin Abstract Contract
 contract UACAC {
@@ -13,7 +13,7 @@ contract UACAC {
     50.5% of UAC will be withdrawn here
     Token will be withdraws in slices after 3-6-9-12-18-24 months
 */
-contract UbiatarPlay is Owned{
+contract UbiatarPlay is Ownable{
 
     using SafeMath for uint;
 
@@ -91,32 +91,32 @@ contract UbiatarPlay is Owned{
     {
         uint amountToSend = 0;
 
-        if(uint(now) > startingTime + 90 days)
+        if(uint(now) > startingTime.add(90 days))
         {
             amountToSend = withdrawMonths3;
             withdrawMonths3 = 0;
         }
-        if(uint(now) > startingTime + 180 days)
+        if(uint(now) > startingTime.add(180 days))
         {
             amountToSend = amountToSend.add(withdrawMonths6);
             withdrawMonths6 = 0;
         }
-        if(uint(now) > startingTime + 270 days)
+        if(uint(now) > startingTime.add(270 days))
         {
             amountToSend = amountToSend.add(withdrawMonths9);
             withdrawMonths9 = 0;
         }
-        if(uint(now) > startingTime + 360 days)
+        if(uint(now) > startingTime.add(360 days))
         {
             amountToSend = amountToSend.add(withdrawMonths12);
             withdrawMonths12 = 0;
         }
-        if(uint(now) > startingTime + 540 days)
+        if(uint(now) > startingTime.add(540 days))
         {
             amountToSend = amountToSend.add(withdrawMonths18);
             withdrawMonths18 = 0;
         }
-        if(uint(now) > startingTime + 720 days)
+        if(uint(now) > startingTime.add(720 days))
         {
             amountToSend = amountToSend.add(withdrawMonths24);
             withdrawMonths24 = 0;

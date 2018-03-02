@@ -21,21 +21,16 @@ const should = chai.should()
 
 const truffleContract = require("truffle-contract")
 
-const SafeMath = truffleContract(require(__dirname + "/../build/contracts/SafeMath.json"))
 const PreSaleVesting = truffleContract(require(__dirname + "/../build/contracts/PreSaleVesting.json"))
 const UAC = truffleContract(require(__dirname + "/../build/contracts/UAC.json"))
-const StdToken = truffleContract(require(__dirname + "/../build/contracts/StdToken.json"))
-const Owned = truffleContract(require(__dirname + "/../build/contracts/Owned.json"))
 const ICO = truffleContract(require(__dirname + "/../build/contracts/ICO.json"))
 const UACUnsold = truffleContract(require(__dirname + "/../build/contracts/UACUnsold.json"))
 const FoundersVesting = truffleContract(require(__dirname + "/../build/contracts/FoundersVesting.json"))
 const UbiatarPlay = truffleContract(require(__dirname + "/../build/contracts/UbiatarPlay.json"))
 
-SafeMath.setProvider(web3.currentProvider)
-StdToken.setProvider(web3.currentProvider)
+
 PreSaleVesting.setProvider(web3.currentProvider)
 UAC.setProvider(web3.currentProvider)
-Owned.setProvider(web3.currentProvider)
 ICO.setProvider(web3.currentProvider)
 UACUnsold.setProvider(web3.currentProvider)
 FoundersVesting.setProvider(web3.currentProvider)
@@ -85,8 +80,8 @@ const mineBlock = () => {
 
 
 describe("ICO tests", () => {
-  var accounts, networkId, safeMath, preSaleVesting, uac, stdToken, owned, uacUnsold, foundersVesting, ico, ubiatarPlay
-  var owner, user, buyer, advisorsWallet, ubiatarColdWallet, buyer2, ubiatarColdWallet2, ubiatarColdWallet3
+  var accounts, networkId, preSaleVesting, uac, uacUnsold, foundersVesting, ico, ubiatarPlay
+  var owner, user, buyer, advisorsWallet, ubiatarColdWallet, buyer2, ubiatarColdWallet2, ubiatarColdWallet3, newOwner
 
   before("get accounts", () => {
     return web3.eth.getAccountsPromise()
@@ -97,7 +92,6 @@ describe("ICO tests", () => {
         ICO.setNetwork(networkId)
         PreSaleVesting.setNetwork(networkId)
         UAC.setNetwork(networkId)
-        StdToken.setNetwork(networkId)
         FoundersVesting.setNetwork(networkId)
         UACUnsold.setNetwork(networkId)
         UbiatarPlay.setNetwork(networkId)
@@ -109,43 +103,9 @@ describe("ICO tests", () => {
         buyer2 = accounts[5]
         ubiatarColdWallet2 = accounts[6]
         ubiatarColdWallet3 = accounts[7]
+        newOwner = accounts[8]
       })
   })
-
- /* before("deploy ICOEngineInterface", () => {
-    return ICOEngineInterface.new({from: owner})
-      .then(_icoEngineInterface => icoEngineInterface = _icoEngineInterface)
-      .then(() => ICO.link({ICOEngineInterface: icoEngineInterface.address}))
-  })*/
-
-  before("deploy Owned", () => {
-    return Owned.new({from: owner})
-      .then(_owned => owned = _owned)
-      .then(() => ICO.link({Owned: owned.address}))
-      .then(() => UAC.link({Owned: owned.address}))
-      .then(() => UACUnsold.link({Owned: owned.address}))
-      .then(() => FoundersVesting.link({Owned: owned.address}))
-      .then(() => PreSaleVesting.link({Owned: owned.address}))
-      .then(() => UbiatarPlay.link({Owned: owned.address}))
-  })
-
-  before("deploy SafeMath", () => {
-    return SafeMath.new({from: owner})
-      .then(_safeMath => safeMath = _safeMath)
-      .then(() => PreSaleVesting.link({SafeMath: safeMath.address}))
-      .then(() => ICO.link({SafeMath: safeMath.address}))
-      .then(() => UAC.link({SafeMath: safeMath.address}))
-      .then(() => StdToken.link({SafeMath: safeMath.address}))
-      .then(() => FoundersVesting.link({SafeMath: safeMath.address}))
-      .then(() => UACUnsold.link({SafeMath: safeMath.address}))
-      .then(() => UbiatarPlay.link({SafeMath: safeMath.address}))
-  })
-
- /* before("deploy StdToken", () => {
-    return StdToken.new({from: owner})
-      .then(_stdToken => stdToken = _stdToken)
-      .then(() => UAC.link({StdToken: stdToken.address}))
-  })*/
 
   beforeEach("deploy UAC", () => {
     return UAC.new({from: owner})
@@ -182,6 +142,24 @@ describe("ICO tests", () => {
       .then(() => ubiatarPlay.setIcoContractAddress(ico.address, {from: owner}))
       .then(() => foundersVesting.setIcoContractAddress(ico.address, {from: owner}))
   }
+
+  it("should change ICO's ownership", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.owner())
+      .then(address => assert.strictEqual(address, owner, "should be owner"))
+      .then(() => ico.transferOwnership(newOwner, {from: owner}))
+      .then(() => ico.owner())
+      .then(address => assert.strictEqual(address, newOwner, "should be newOwner"))
+  })
+
+  it("should not change ICO's ownership", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.owner())
+      .then(address => assert.strictEqual(address, owner, "should be owner"))
+      .then(() => ico.transferOwnership(newOwner, {from: newOwner})).should.be.rejected
+      .then(() => ico.owner())
+      .then(address => assert.strictEqual(address, owner, "should be owner"))
+  })
 
   it("should start the ICO", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
@@ -613,7 +591,7 @@ describe("ICO tests", () => {
 })
 
 describe("ICOEngineInterface tests", () => {
-  var accounts, networkId, safeMath, preSaleVesting, uac, stdToken, owned, uacUnsold, foundersVesting, ico, ubiatarPlay
+  var accounts, networkId, preSaleVesting, uac, uacUnsold, foundersVesting, ico, ubiatarPlay
   var owner, user, buyer, advisorsWallet, ubiatarColdWallet
 
   before("get accounts", () => {
@@ -625,7 +603,6 @@ describe("ICOEngineInterface tests", () => {
         ICO.setNetwork(networkId)
         PreSaleVesting.setNetwork(networkId)
         UAC.setNetwork(networkId)
-        StdToken.setNetwork(networkId)
         FoundersVesting.setNetwork(networkId)
         UACUnsold.setNetwork(networkId)
         UbiatarPlay.setNetwork(networkId)
@@ -635,41 +612,6 @@ describe("ICOEngineInterface tests", () => {
         advisorsWallet = accounts[3]
         ubiatarColdWallet = accounts[4]
       })
-  })
-
-  /* before("deploy ICOEngineInterface", () => {
-     return ICOEngineInterface.new({from: owner})
-       .then(_icoEngineInterface => icoEngineInterface = _icoEngineInterface)
-       .then(() => ICO.link({ICOEngineInterface: icoEngineInterface.address}))
-   })*/
-
-  before("deploy Owned", () => {
-    return Owned.new({from: owner})
-      .then(_owned => owned = _owned)
-      .then(() => ICO.link({Owned: owned.address}))
-      .then(() => UAC.link({Owned: owned.address}))
-      .then(() => UACUnsold.link({Owned: owned.address}))
-      .then(() => FoundersVesting.link({Owned: owned.address}))
-      .then(() => PreSaleVesting.link({Owned: owned.address}))
-      .then(() => UbiatarPlay.link({Owned: owned.address}))
-  })
-
-  before("deploy SafeMath", () => {
-    return SafeMath.new({from: owner})
-      .then(_safeMath => safeMath = _safeMath)
-      .then(() => PreSaleVesting.link({SafeMath: safeMath.address}))
-      .then(() => ICO.link({SafeMath: safeMath.address}))
-      .then(() => UAC.link({SafeMath: safeMath.address}))
-      .then(() => StdToken.link({SafeMath: safeMath.address}))
-      .then(() => FoundersVesting.link({SafeMath: safeMath.address}))
-      .then(() => UACUnsold.link({SafeMath: safeMath.address}))
-      .then(() => UbiatarPlay.link({SafeMath: safeMath.address}))
-  })
-
-  before("deploy StdToken", () => {
-    return StdToken.new({from: owner})
-      .then(_stdToken => stdToken = _stdToken)
-      .then(() => UAC.link({StdToken: stdToken.address}))
   })
 
   beforeEach("deploy UAC", () => {
@@ -713,22 +655,6 @@ describe("ICOEngineInterface tests", () => {
       .then(() => ico.started())
       .then(s => assert.strictEqual(s.toString(), "false", "should be false"))
   })
-
-  /*it("should be started in running state", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
-      .then(() => ico.startICO({from: owner}))
-      .then(() => ico.started())
-      .then(s => assert.strictEqual(s.toString(), "true", "should be true"))
-  })
-
-  it("should not be started in finished state", () => {
-    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
-      .then(() => ico.startICO({from: owner}))
-      .then(() => ico.setIcoFinishTime(0, {from: owner}))
-      .then(() => ico.finishICO({from: owner}))
-      .then(() => ico.started())
-      .then(s => assert.strictEqual(s.toString(), "true", "should be true"))
-  })*/
 
   it("should not be ended if the ico is not started", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)

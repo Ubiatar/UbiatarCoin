@@ -1,13 +1,13 @@
 pragma solidity ^0.4.18;
 
-import "./SafeMath.sol";
-import "./Owned.sol";
+import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract UACAC {
     function transfer(address _to, uint256 _value) public returns(bool);
 }
 
-contract FoundersVesting is Owned
+contract FoundersVesting is Ownable
 {
     using SafeMath for uint;
 

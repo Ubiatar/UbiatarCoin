@@ -2,14 +2,14 @@ pragma solidity ^0.4.18;
 
 // Maps account addresses and balances from PreSale
 
-import "./SafeMath.sol";
-import "./Owned.sol";
+import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract UACAC {
     function transfer(address _to, uint256 _value) public returns(bool);
 }
 
-contract PreSaleVestingTest is Owned
+contract PreSaleVestingTest is Ownable
 {
 
     using SafeMath for uint;
