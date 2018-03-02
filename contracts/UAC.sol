@@ -1,10 +1,9 @@
 pragma solidity ^0.4.18;
 
-import "./SafeMath.sol";
-import "./StdToken.sol";
+import "../node_modules/zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "./Owned.sol";
 
-contract UAC is StdToken, Owned
+contract UAC is StandardToken, Owned
 {
 
     using SafeMath for uint;
@@ -72,10 +71,10 @@ contract UAC is StdToken, Owned
     function issueTokens(address _who, uint _tokens)
     byIcoContract
     {
-        require((totalSupply + _tokens) <= TOTAL_TOKEN_SUPPLY);
+        require((totalSupply_ + _tokens) <= TOTAL_TOKEN_SUPPLY);
 
         balances[_who] = balances[_who].add(_tokens);
-        totalSupply = totalSupply.add(_tokens);
+        totalSupply_ = totalSupply_.add(_tokens);
 
         Transfer(0x0, _who, _tokens);
     }
@@ -85,7 +84,7 @@ contract UAC is StdToken, Owned
     byIcoContract
     {
         balances[_who] = balances[_who].sub(_tokens);
-        totalSupply = totalSupply.sub(_tokens);
+        totalSupply_ = totalSupply_.sub(_tokens);
     }
 
     function lockTransfer(bool _lock)

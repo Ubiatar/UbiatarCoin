@@ -141,11 +141,11 @@ describe("ICO tests", () => {
       .then(() => UbiatarPlay.link({SafeMath: safeMath.address}))
   })
 
-  before("deploy StdToken", () => {
+ /* before("deploy StdToken", () => {
     return StdToken.new({from: owner})
       .then(_stdToken => stdToken = _stdToken)
       .then(() => UAC.link({StdToken: stdToken.address}))
-  })
+  })*/
 
   beforeEach("deploy UAC", () => {
     return UAC.new({from: owner})
