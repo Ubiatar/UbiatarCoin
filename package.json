@@ -4,15 +4,11 @@
   "description": "Ubiatarplay ICO smart contracts",
   "main": "index.js",
   "scripts": {
-    "init": "truffle init",
-    "test owned": "mocha test/Owned.js",
     "test preSaleVesting": "mocha test/PreSaleVesting.js",
     "test ico": "mocha test/ICO.js",
     "test ubiatarPlay": "mocha test/ubiatarPlay.js",
     "test foundersVesting": "mocha test/foundersVesting.js",
-    "deploy": "truffle deploy",
-    "compile": "rimraf build && truffle compile",
-    "test all": "truffle test"
+    "compile": "rimraf build && truffle compile"
   },
   "repository": {
     "type": "git",
@@ -35,15 +31,11 @@
   "homepage": "https://github.com/Ubiatar/UbiatarCoin#readme",
   "dependencies": {
     "bluebird": "3.5.1",
-    "ethereumjs-wallet": "^0.6.0",
     "truffle-contract": "2.0.5",
-    "truffle-hdwallet-provider": "0.0.3",
     "web3": "^0.18.4",
-    "web3-provider-engine": "^8.6.1",
     "zeppelin-solidity": "^1.7.0"
   },
   "devDependencies": {
-    "bip39": "2.3.0",
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "ethereumjs-testrpc": "2.2.7",
