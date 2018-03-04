@@ -78,7 +78,7 @@ const mineBlock = () => {
 }
 
 
-describe("ICO tests", () => {
+describe("UbiatarPlay tests", () => {
   var accounts, networkId, preSaleVesting, uac, uacUnsold, foundersVesting, ico, ubiatarPlay, advisorsWallet
   var owner, user, ubiatarAccount
 

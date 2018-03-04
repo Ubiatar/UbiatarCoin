@@ -6,7 +6,6 @@
   "scripts": {
     "compile": "rimraf build && truffle compile",
     "test": "mocha",
-    "test owned": "mocha test/Owned.js",
     "test preSaleVesting": "mocha test/PreSaleVesting.js",
     "test ico": "mocha test/ICO.js",
     "test ubiatarPlay": "mocha test/ubiatarPlay.js",
