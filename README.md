@@ -26,6 +26,20 @@ Read more about [OpenZeppelin](https://openzeppelin.org/).
 $ npm install
 ```
 
+### Unit Testing
+
+Compile contracts first of all
+
+```
+$ npm run compile
+```
+
+and test them
+
+```
+$ npm run test
+```
+
 ### Deploy
 
 Deploy in order

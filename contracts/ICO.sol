@@ -30,7 +30,7 @@ contract UACAC {
 
 // PreSaleVesting Abstract Contract
 contract PreSaleVestingAC {
-    function finishIco();
+    function finishIco() public;
 }
 
 // Founders Vesting Abstract Contract
@@ -40,7 +40,7 @@ contract FoundersVestingAC {
 
 // UbiatarPlay Abstract Contract
 contract UbiatarPlayAC {
-    function finishIco();
+    function finishIco() public;
 }
 
 /*
@@ -200,6 +200,7 @@ contract ICO is Ownable, ICOEngineInterface {
         address _ubiatarPlayAddress,
         address _advisorsWalletAddress
     )
+    public
     {
         uacToken = UACAC(_uacTokenAddress);
         preSaleVesting = PreSaleVestingAC(_preSaleVestingAddress);
@@ -495,7 +496,7 @@ contract ICO is Ownable, ICOEngineInterface {
     }
 
     function getTotalIcoTokens()
-    constant
+    pure
     public
     returns (uint)
     {
@@ -657,13 +658,17 @@ contract ICO is Ownable, ICOEngineInterface {
     // It allows to buy tokens for an other address than msg.sender
     function buyTokensFor(address _to)
     payable
-    public {
+    public
+    {
         // buyTokens -> issueTokensInternal
         buyTokens(_to);
     }
 
     // Default fallback function
-    function() payable {
+    function()
+    payable
+    public
+    {
         buyTokens(msg.sender);
     }
 }

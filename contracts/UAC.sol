@@ -56,6 +56,7 @@ contract UAC is StandardToken, Ownable
 
     // UAC Constructor
     function UAC()
+    public
     {
         require(TOTAL_TOKEN_SUPPLY == 100000000 * 1 ether);
         require(TOTAL_ICO_SUPPLY.add(TOTAL_PRESALE_SUPPLY).add(TOTAL_ADVISORS_SUPPLY).add(TOTAL_UBIATARPLAY_SUPPLY).add(TOTAL_FOUNDERS_SUPPLY) == TOTAL_TOKEN_SUPPLY);
@@ -81,6 +82,7 @@ contract UAC is StandardToken, Ownable
 
     // It creates new token and it can be called only by ICO contract
     function issueTokens(address _who, uint _tokens)
+    public
     byIcoContract
     {
         require((totalSupply_ + _tokens) <= TOTAL_TOKEN_SUPPLY);
@@ -93,6 +95,7 @@ contract UAC is StandardToken, Ownable
 
     // It burns tokens updating total supply
     function burnTokens(address _who, uint _tokens)
+    public
     byIcoContract
     {
         balances[_who] = balances[_who].sub(_tokens);
@@ -101,13 +104,16 @@ contract UAC is StandardToken, Ownable
 
     // It enables or disables token transfers
     function lockTransfer(bool _lock)
+    public
     byIcoContract
     {
         lockTransfers = _lock;
     }
 
     // It disallows to send money directly to this contract
-    function() {
+    function()
+    public
+    {
         revert();
     }
 }

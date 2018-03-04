@@ -4,15 +4,13 @@
   "description": "Ubiatarplay ICO smart contracts",
   "main": "index.js",
   "scripts": {
-    "init": "truffle init",
+    "compile": "rimraf build && truffle compile",
+    "test": "mocha",
     "test owned": "mocha test/Owned.js",
     "test preSaleVesting": "mocha test/PreSaleVesting.js",
     "test ico": "mocha test/ICO.js",
     "test ubiatarPlay": "mocha test/ubiatarPlay.js",
-    "test foundersVesting": "mocha test/foundersVesting.js",
-    "deploy": "truffle deploy",
-    "compile": "rimraf build && truffle compile",
-    "test all": "truffle test"
+    "test foundersVesting": "mocha test/foundersVesting.js"
   },
   "repository": {
     "type": "git",

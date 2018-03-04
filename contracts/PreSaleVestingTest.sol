@@ -5,38 +5,52 @@ pragma solidity ^0.4.18;
 import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
 
+// UbiatarCoin Abstract Contract
 contract UACAC {
     function transfer(address _to, uint256 _value) public returns(bool);
 }
 
+/*
+    PreSaleVesting contract.
+    It is in charge to allow Token sold during PreSale to be withdrawn day by day
+*/
 contract PreSaleVestingTest is Ownable
 {
-
+    // SafeMath standard lib
     using SafeMath for uint;
 
+    // It is equal to ICO finishing epoch time plus 7 days. Until this epoch, PreSale token can not be withdrawn
     uint public firstThreshold;
+    // It is equal to ICO finishing epoch time plus 97 days. After this epoch, PreSale token can be entirely withdrawn
     uint public secondThreshold;
 
+    // Flag that indicates if ICO is finished or not
     bool public icoFinished = false;
 
+    // ICO contract address
     address public icoContractAddress = 0x0;
 
-    address public uacTokenAddress =0x0;
+    // UbiatarCoin ERC20 Token contract address
+    address public uacTokenAddress = 0x0;
 
+    // The structure that describes PreSale wallets situation
     struct Investor
     {
-        uint initialBalance;
-        uint balance;
-        uint lastWithdrawTime;
-        uint8 firstWithdraw;
+    uint initialBalance;
+    uint balance;
+    uint lastWithdrawTime;
+    uint8 firstWithdraw;
     }
 
+    // Map [Investor Wallet addres] -> Its withdrawn token situation
     mapping(address => Investor) investors;
 
-
+    // UbiatarCoin contract reference
     UACAC public uacToken;
 
+    // PreSaleVesting constructor. It takes UbiatarCoin address, and has a list of harcoded PreSale wallets and their UAC tokens
     function PreSaleVestingTest(address _uacTokenAddress)
+    public
     {
         require(_uacTokenAddress != 0x0);
 
@@ -103,19 +117,23 @@ contract PreSaleVestingTest is Ownable
         uacTokenAddress = _uacTokenAddress;
     }
 
+    // Only by ICO contract
     modifier byIcoContract()
     {
         require(msg.sender == icoContractAddress);
         _;
     }
 
+    // Only when ICO is finished
     modifier onlyIcoFinished()
     {
         require(icoFinished == true);
         _;
     }
 
+    // It is called by ICO contract when ICO owner fires finishICO on ICO contract itself
     function finishIco()
+    public
     byIcoContract
     {
         firstThreshold = uint(now).add(7 days);
@@ -123,19 +141,27 @@ contract PreSaleVestingTest is Ownable
         icoFinished = true;
     }
 
+    // ICO contract address setter
     function setIcoContractAddress(address _icoContractAddress)
+    public
     onlyOwner
     {
+
         icoContractAddress = _icoContractAddress;
     }
 
+    // UbiatarCoin contract address setter
     function setUacTokenAddress(address _uacTokenAddress)
+    public
     onlyOwner
     {
         uacTokenAddress = _uacTokenAddress;
         uacToken = UACAC(_uacTokenAddress);
     }
 
+    // It is in charge to allow PreSale addresses to withdrawn pre-sold tokens during PreSale
+    // 1/3 of totale amount is unlocked after first threshold
+    // 2/3 are unlocked day by day for the next 90 days
     function withdrawTokens()
     public
     onlyIcoFinished
@@ -173,20 +199,24 @@ contract PreSaleVestingTest is Ownable
         amountToSend = 0;
     }
 
+    // It allows to get PreSale wallet initial balance
     function getInitialBalance(address user)
     constant
     public
     returns (uint initialBalance)
     {
-        initialBalance = investors[user].initialBalance;
-        return initialBalance;
+        return investors[user].initialBalance;
     }
 
+    // It allows to get reclaimable tokens based on ICO and epoch time situation for a specif PreSale wallet
     function getReclaimableTokens(address user)
     constant
     public
     returns (uint reclaimableTokens)
     {
+        uint balance = investors[user].balance;
+        uint lastWithdrawTime = investors[user].lastWithdrawTime;
+
         if(icoFinished == false)
         {
             return 0;
@@ -197,28 +227,29 @@ contract PreSaleVestingTest is Ownable
             reclaimableTokens = 0;
 
             if ((uint(now) >= firstThreshold) && (investors[user].firstWithdraw == 0)) {
-                investors[user].balance = investors[user].initialBalance;
-                investors[user].lastWithdrawTime = secondThreshold;
+                balance = investors[user].initialBalance;
+                lastWithdrawTime = secondThreshold;
                 reclaimableTokens = tempBalance;
             }
 
             tempBalance = tempBalance.mul(2);
 
             if (uint(now) >= secondThreshold) {
-                uint daysPassed = (uint(now).sub(investors[user].lastWithdrawTime)).div(1 days);
+                uint daysPassed = (uint(now).sub(lastWithdrawTime)).div(1 days);
                 reclaimableTokens = reclaimableTokens.add((tempBalance.div(180)).mul(daysPassed));
             }
 
             reclaimableTokens = reclaimableTokens.div(1 ether);
 
-            if (investors[user].balance < reclaimableTokens) {
-                reclaimableTokens = investors[user].balance;
+            if (balance < reclaimableTokens) {
+                reclaimableTokens = balance;
             }
 
             return reclaimableTokens;
         }
     }
 
+    // It allows to get total amount of tokens that could still be withdrawn, given by the sum of reclaimable tokens and locked ones for a specific PreSale wallet
     function getBalance(address user)
     constant
     public
@@ -227,11 +258,15 @@ contract PreSaleVestingTest is Ownable
         return getReclaimableTokens(user).add(getLockedTokens(user));
     }
 
+    // It allows to get locked tokens for a specific PreSale wallet
     function getLockedTokens(address user)
     constant
     public
     returns (uint lockedTokens)
     {
+        uint balance = investors[user].balance;
+        uint lastWithdrawTime = investors[user].lastWithdrawTime;
+
         if(icoFinished == false)
         {
             return investors[user].initialBalance;
@@ -243,36 +278,40 @@ contract PreSaleVestingTest is Ownable
 
 
             if ((uint(now) >= firstThreshold) && (investors[user].firstWithdraw == 0)) {
-                investors[user].balance = investors[user].initialBalance;
-                investors[user].lastWithdrawTime = secondThreshold;
+                balance = investors[user].initialBalance;
+                lastWithdrawTime = secondThreshold;
                 reclaimableTokens = tempBalance;
             }
 
             tempBalance = tempBalance.mul(2);
 
             if (uint(now) >= secondThreshold) {
-                uint daysPassed = (uint(now).sub(investors[user].lastWithdrawTime)).div(1 days);
+                uint daysPassed = (uint(now).sub(lastWithdrawTime)).div(1 days);
                 reclaimableTokens = reclaimableTokens.add((tempBalance.div(180)).mul(daysPassed));
             }
 
             reclaimableTokens = reclaimableTokens.div(1 ether);
 
-            if (investors[user].balance < reclaimableTokens) {
-                reclaimableTokens = investors[user].balance;
+            if (balance < reclaimableTokens) {
+                reclaimableTokens = balance;
             }
 
-            lockedTokens = investors[user].balance - reclaimableTokens;
+            lockedTokens = balance - reclaimableTokens;
         }
     }
 
     function addNewInvestor(address _address, uint _initialBalance)
+    public
     onlyOwner
     {
         investors[_address].initialBalance = _initialBalance;
     }
 
-    // Do not allow to send money directly to this contract
-    function() payable {
+    // It doesn't allow to send money directly to this contract
+    function()
+    public
+    payable
+    {
         revert();
     }
 }

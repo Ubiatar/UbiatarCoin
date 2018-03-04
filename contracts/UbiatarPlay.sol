@@ -21,6 +21,7 @@ contract UbiatarPlay is Ownable{
     // Flag that indicates if ICO is finished
     bool public icoFinished = false;
 
+    // Starting time is set when finishICO is fired by ICO contract
     uint public startingTime = 0;
 
     // ICO contract address
@@ -63,13 +64,16 @@ contract UbiatarPlay is Ownable{
     }
 
     // Contract constructor
-    function UbiatarPlay(address _uacTokenAddress){
+    function UbiatarPlay(address _uacTokenAddress)
+    public
+    {
         uacToken = UACAC(_uacTokenAddress);
         uacTokenAddress = _uacTokenAddress;
     }
 
     // Function called by ICO contract when it is finished
     function finishIco()
+    public
     byIcoContract
     {
         startingTime = uint(now);

@@ -8,7 +8,10 @@ import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
 contract UACUnsold is Ownable{
 
     // It disallows to send money directly to this contract
-    function() payable {
+    function()
+    public
+    payable
+    {
         revert();
     }
 }
