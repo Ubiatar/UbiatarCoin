@@ -74,6 +74,8 @@ contract ICO is Ownable, ICOEngineInterface {
     // 50 500 000 tokens for Ubiatar Play
     uint public constant UBIATARPLAY_TOKENS = 50500000 * 1 ether;
 
+    uint public constant RC_TOKEN_LIMIT = 7500000 * 1 ether;
+
     /// Fields:
 
     // ICO starting block number
@@ -86,6 +88,12 @@ contract ICO is Ownable, ICOEngineInterface {
     address public toBeRefund = 0x0;
     // ICO refund amount in case of overflow on the last token purchase
     uint public refundAmount;
+
+    address public toBeRefundRC = 0x0;
+
+    uint public refundAmountRC = 0;
+
+
 
     // Total amount of tokens sold during ICO
     uint public icoTokensSold = 0;
@@ -105,6 +113,8 @@ contract ICO is Ownable, ICOEngineInterface {
     address public advisorsWalletAddress = 0x0;
     // This is where Ethers will be transfered
     address public ubiatarColdWallet = 0x0;
+
+    address public RCContractAddress = 0x0;
 
     // UbiatarCoin contract reference
     UACAC public uacToken;
@@ -161,6 +171,12 @@ contract ICO is Ownable, ICOEngineInterface {
     modifier canFinishICO()
     {
         require((uint(now) >= icoFinishTime) || (icoTokensSold == ICO_TOKEN_SUPPLY_LIMIT));
+        _;
+    }
+
+    modifier onlyFromRC()
+    {
+        require(msg.sender == RCContractAddress);
         _;
     }
 
@@ -355,6 +371,40 @@ contract ICO is Ownable, ICOEngineInterface {
         }
     }
 
+    function buyTokensRC(address _buyer)
+    public
+    payable
+    onlyFromRC
+    {
+        require(msg.value >= 100 finney);
+
+        uint bonusPercent = 10;
+
+        uint newTokens = (msg.value * getUacTokensPerEth(bonusPercent)).div(1 ether);
+
+        if ((icoTokensSold.add(newTokens)) <= RC_TOKEN_LIMIT)
+        {
+            issueTokensInternal(_buyer, newTokens);
+
+            // This is total collected ETH
+            collectedWei = collectedWei.add(msg.value);
+        }
+        else
+        {
+            uint tokensBought = RC_TOKEN_LIMIT.sub(icoTokensSold);
+            uint _refundAmount = msg.value.sub((tokensBought.div(getUacTokensPerEth(bonusPercent))).mul(1 ether));
+            require(_refundAmount < msg.value);
+            refundAmountRC = _refundAmount;
+            toBeRefundRC = _buyer;
+            LogOverflow(_buyer, _refundAmount);
+
+            issueTokensInternal(_buyer, tokensBought);
+
+            // This is total collected ETH
+            collectedWei = collectedWei.add(_refundAmount);
+        }
+    }
+
     // It is an internal function that will call UAC ERC20 contract to issue the tokens
     function issueTokensInternal(address _to, uint _tokens)
     internal
@@ -413,6 +463,14 @@ contract ICO is Ownable, ICOEngineInterface {
     {
         unsoldContractAddress = _unsoldContractAddress;
         LogUnsoldContractAddressSet(unsoldContractAddress);
+    }
+
+    function setRcContractAddress(address _RCContractAddress)
+    public
+    onlyOwner
+    onlyInState(State.Init)
+    {
+        RCContractAddress = _RCContractAddress;
     }
 
     function setFoundersVestingAddress(address _foundersVestingAddress)
