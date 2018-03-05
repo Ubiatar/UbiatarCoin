@@ -3,6 +3,7 @@ pragma solidity ^0.4.18;
 import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
 
+// ICO Abstract Contract
 contract ICOAC
 {
     function getBlockNumberStart() constant public returns(uint);
@@ -10,29 +11,44 @@ contract ICOAC
     function buyTokensRC(address _buyer) payable public;
 }
 
+// UbiatarCoin Abstract Contract
 contract UACAC
 {
     function balanceOf(address _owner) public constant returns (uint256);
 }
 
-
+/*
+    Reservation contract
+    It will deliver an amount of token with a discount price a few hours before ICO begin
+*/
 contract ReservationContract is Ownable
 {
+    // SafeMath standard lib
     using SafeMath for uint;
-    //uint public advisorPercentage = 0;
+
+    // ICO contract address
     address public icoContractAddress = 0x0;
+    // UbiatarCoin contract address
     address public uacTokenAddress = 0x0;
+    // ICO block number start
     uint public icoBlockNumberStart = 0;
+    // Reservation contract block number start
     uint public rcBlockNumberStart = 0;
+    // ICO contract reference
     ICOAC public ico;
+    // UbiatarCoint contract reference
     UACAC public uacToken;
 
     event LogReserve(address to, uint value);
 
+    // Reservation contract constructor
     function ReservationContract()
-    public {
-    }
+    public
+    {}
 
+    /// modifiers
+
+    // only during  Reservation contract campaign
     modifier onlyInBlockNumberRange()
     {
         require(block.number >= rcBlockNumberStart);
@@ -40,6 +56,9 @@ contract ReservationContract is Ownable
         _;
     }
 
+    /// setters
+
+    // set ICO contract address
     function setIcoContractAddress(address _icoContractAddress)
     public
     onlyOwner
@@ -48,6 +67,7 @@ contract ReservationContract is Ownable
         ico = ICOAC(_icoContractAddress);
     }
 
+    // set UbiatarCoint ERC20 token contract address
     function setUacTokenAddress(address _uacTokenAddress)
     public
     onlyOwner
@@ -56,6 +76,7 @@ contract ReservationContract is Ownable
         uacToken = UACAC(_uacTokenAddress);
     }
 
+    // set Reservation contract campaign block number start
     function setRCBlockNumberStart(uint _blockNumber)
     onlyOwner
     public
@@ -63,16 +84,17 @@ contract ReservationContract is Ownable
         rcBlockNumberStart = _blockNumber;
     }
 
+    /// functions
 
+    // It gets ICO starting block number
     function getIcoBlockNumberStart()
     public
     onlyOwner
     {
         icoBlockNumberStart = ico.getBlockNumberStart();
-        // subtract roughly 3 days
-        rcBlockNumberStart = icoBlockNumberStart - uint(3 days).div(uint(17 seconds));
     }
 
+    // It retrieves user reserved tokens
     function getReservedTokens(address investor)
     constant
     public
@@ -81,6 +103,7 @@ contract ReservationContract is Ownable
         return uacToken.balanceOf(investor);
     }
 
+    // Payback function to partecipate to Reservation contract campaign
     function()
     public
     payable
