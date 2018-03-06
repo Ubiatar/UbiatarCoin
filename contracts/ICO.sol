@@ -459,7 +459,6 @@ contract ICO is Ownable, ICOEngineInterface {
     function setRcContractAddress(address _RCContractAddress)
     public
     onlyOwner
-    onlyInState(State.Init)
     {
         RCContractAddress = _RCContractAddress;
     }

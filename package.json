@@ -10,7 +10,8 @@
     "test reservationContract": "mocha test/reservationContract.js",
     "test ico": "mocha test/ICO.js",
     "test ubiatarPlay": "mocha test/ubiatarPlay.js",
-    "test foundersVesting": "mocha test/foundersVesting.js"
+    "test foundersVesting": "mocha test/foundersVesting.js",
+    "test ReservationContract": "mocha test/RC.js"
   },
   "repository": {
     "type": "git",
