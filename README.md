@@ -56,7 +56,7 @@ Set addresses in contracts
 ```
 1. set ICO contract address in UAC, PreSaleVesting, UbiatarPlay, FoundersVesting and ReservationContract
 2. Set foundersTokenHolder in FoundersVesting
-3. Set ubiatarColdWallet in ICO
+3. Set ubiatarColdWallet and RCContractAddress in ICO
 4. Set ubiatarPlayTokenHolder in UbiatarPlay
 5. Set icoContractAddress and uacTokenAddress in ReservationContract
 6. In ReservationContract set the same usdTokenPrice and UsdPerEthRate as the ICO contract
