@@ -18,7 +18,7 @@ contract UAC is StandardToken, Ownable
     // ICO contract address
     address public icoContractAddress = 0x0;
     // Bool to lock UAC transfers before ICO end
-    bool public lockTransfers = false;
+    bool public lockTransfers = true;
 
     // total UAC token supply
     uint public constant TOTAL_TOKEN_SUPPLY = 100000000 * 1 ether;

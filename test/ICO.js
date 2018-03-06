@@ -375,7 +375,7 @@ describe("ICO tests", () => {
       .then(b => assert.strictEqual(b.toString(10), web3.toWei(15000000, "ether"), "should be 15000000 tokens"))
   })
 
-  it("should buy all 15000000 tokens with overflow and payback of 2 ether", () => {
+  it("should buy all 15000000 tokens with overflow and payback of 1 ether", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => web3.eth.getBlockNumberPromise())
@@ -401,6 +401,8 @@ describe("ICO tests", () => {
       .then(amount => assert.strictEqual(amount.toString(10), web3.toWei(0, "ether"), "should be 0 ether"))
       .then(() => ico.toBeRefund())
       .then(address => assert.strictEqual(address.toString(10), "0x0000000000000000000000000000000000000000", "should be null"))
+      .then(() => ico.getTotalCollectedWei())
+      .then(wei => assert.strictEqual(wei.toString(10), web3.toWei(1, "ether"), "should be 1 ether"))
   })
 
   it("should not be able to call the buyTokens() function", () => {

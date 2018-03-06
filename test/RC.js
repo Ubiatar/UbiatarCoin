@@ -201,6 +201,32 @@ describe("RC tests", () => {
       }))
   })
 
+  it("should buy al 7500000 tokens", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => ico.startICO({from: owner}))
+      .then(() => web3.eth.getBlockNumberPromise())
+      .then(number => ico.setBlockNumberStart(number + 20, {from: owner}))
+      .then(() => ico.getBlockNumberStart({from: owner}))
+      .then(() => mineBlock())
+      .then(() => reservationContract.getIcoBlockNumberStart({from: owner}))
+      .then(() => web3.eth.getBlockNumberPromise())
+      .then(number => reservationContract.setRCBlockNumberStart(number, {from: owner}))
+      .then(() => mineBlock())
+      .then(() => ico.setRcContractAddress(reservationContract.address, {from: owner}))
+      .then(() => ico.setUsdTokenPrice(220, {from: owner}))
+      .then(() => ico.setUsdPerEthRate(2000000000, {from: owner}))
+      .then(() => web3.eth.sendTransactionPromise({
+        from: buyer,
+        to: reservationContract.address,
+        value: web3.toWei(0.75, "ether")
+      }))
+      .then(() => ico.icoTokensSold())
+      .then(t => assert.strictEqual(t.toString(10), web3.toWei(7500000, "ether"), "should be 7500000 tokens"))
+      .then(() => uac.balanceOf(buyer))
+      .then(b => assert.strictEqual(b.toString(10), web3.toWei(7500000, "ether"), "should be 7500000 tokens"))
+  })
+
+
 })
 
 /*

@@ -7,7 +7,6 @@
     "compile": "rimraf build && truffle compile",
     "test": "mocha",
     "test preSaleVesting": "mocha test/preSaleVesting.js",
-    "test reservationContract": "mocha test/reservationContract.js",
     "test ico": "mocha test/ICO.js",
     "test ubiatarPlay": "mocha test/ubiatarPlay.js",
     "test foundersVesting": "mocha test/foundersVesting.js",

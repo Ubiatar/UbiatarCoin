@@ -236,7 +236,6 @@ contract ICO is Ownable, ICOEngineInterface {
     onlyInState(State.Init)
     {
         setState(State.ICORunning);
-        uacToken.lockTransfer(true);
         uacToken.issueTokens(foundersVestingAddress, FOUNDERS_REWARD);
         uacToken.issueTokens(preSaleVestingAddress, PRESALE_REWARD);
         uacToken.issueTokens(advisorsWalletAddress, ADVISORS_TOKENS);
@@ -349,6 +348,8 @@ contract ICO is Ownable, ICOEngineInterface {
         if ((icoTokensSold.add(newTokens)) <= ICO_TOKEN_SUPPLY_LIMIT)
         {
             issueTokensInternal(_buyer, newTokens);
+
+            collectedWei = collectedWei.add(msg.value);
         }
         else
         {
@@ -360,9 +361,9 @@ contract ICO is Ownable, ICOEngineInterface {
             LogOverflow(_buyer, _refundAmount);
 
             issueTokensInternal(_buyer, tokensBought);
-        }
 
-        collectedWei = collectedWei.add(msg.value);
+            collectedWei = collectedWei.add(msg.value).sub(_refundAmount);
+        }
     }
 
     function buyTokensRC(address _buyer)
@@ -379,6 +380,8 @@ contract ICO is Ownable, ICOEngineInterface {
         if ((icoTokensSold.add(newTokens)) <= RC_TOKEN_LIMIT)
         {
             issueTokensInternal(_buyer, newTokens);
+
+            collectedWei = collectedWei.add(msg.value);
         }
         else
         {
@@ -387,13 +390,12 @@ contract ICO is Ownable, ICOEngineInterface {
             require(_refundAmount < msg.value);
             refundAmountRC = _refundAmount;
             toBeRefundRC = _buyer;
-
             issueTokensInternal(_buyer, tokensBought);
 
             LogOverflow(_buyer, _refundAmount);
-        }
 
-        collectedWei = collectedWei.add(msg.value);
+            collectedWei = collectedWei.add(msg.value).sub(_refundAmount);
+        }
     }
 
     // It is an internal function that will call UAC ERC20 contract to issue the tokens
