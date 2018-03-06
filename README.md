@@ -49,14 +49,19 @@ Deploy in order
 3. FoundersVesting
 4. PreSaleVesting
 5. UbiatarPlay
-6. ICO
+6. ReservationContract
+7. ICO
 ```
 Set addresses in contracts
 ```
-1. set ICO contract address in UAC, PreSaleVesting, UbiatarPlay and FoundersVesting
+1. set ICO contract address in UAC, PreSaleVesting, UbiatarPlay, FoundersVesting and ReservationContract
 2. Set foundersTokenHolder in FoundersVesting
 3. Set ubiatarColdWallet in ICO
 4. Set ubiatarPlayTokenHolder in UbiatarPlay
+5. Set icoContractAddress and uacTokenAddress in ReservationContract
+6. In ReservationContract set the same usdTokenPrice and UsdPerEthRate as the ICO contract
+   then call getIcoBlockNumberStart() to get the ico block number start, then set the rcBlockNumberStart
+   
 foundersTokenHolder, ubiatarColdWallet and ubiatarPlayTokenHolder are wallets
 ```
 ### Documentation
