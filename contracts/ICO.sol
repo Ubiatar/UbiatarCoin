@@ -22,9 +22,7 @@ contract ICOEngineInterface{
 // UbiatarCoin Abstract Contract
 contract UACAC {
     function lockTransfer(bool _lock) public;
-
     function issueTokens(address _who, uint _tokens) public;
-
     function balanceOf(address _owner) public constant returns (uint256);
 }
 
@@ -73,7 +71,7 @@ contract ICO is Ownable, ICOEngineInterface {
     uint public constant ADVISORS_TOKENS = 4915221448641099899301307;
     // 50 500 000 tokens for Ubiatar Play
     uint public constant UBIATARPLAY_TOKENS = 50500000 * 1 ether;
-
+    // 7 500 000 tokens for Reservation contract campaign
     uint public constant RC_TOKEN_LIMIT = 7500000 * 1 ether;
 
     /// Fields:
@@ -351,9 +349,6 @@ contract ICO is Ownable, ICOEngineInterface {
         if ((icoTokensSold.add(newTokens)) <= ICO_TOKEN_SUPPLY_LIMIT)
         {
             issueTokensInternal(_buyer, newTokens);
-
-            // This is total collected ETH
-            collectedWei = collectedWei.add(msg.value);
         }
         else
         {
@@ -365,10 +360,9 @@ contract ICO is Ownable, ICOEngineInterface {
             LogOverflow(_buyer, _refundAmount);
 
             issueTokensInternal(_buyer, tokensBought);
-
-            // This is total collected ETH
-            collectedWei = collectedWei.add(_refundAmount);
         }
+
+        collectedWei = collectedWei.add(msg.value);
     }
 
     function buyTokensRC(address _buyer)
@@ -385,9 +379,6 @@ contract ICO is Ownable, ICOEngineInterface {
         if ((icoTokensSold.add(newTokens)) <= RC_TOKEN_LIMIT)
         {
             issueTokensInternal(_buyer, newTokens);
-
-            // This is total collected ETH
-            collectedWei = collectedWei.add(msg.value);
         }
         else
         {
@@ -396,13 +387,13 @@ contract ICO is Ownable, ICOEngineInterface {
             require(_refundAmount < msg.value);
             refundAmountRC = _refundAmount;
             toBeRefundRC = _buyer;
-            LogOverflow(_buyer, _refundAmount);
 
             issueTokensInternal(_buyer, tokensBought);
 
-            // This is total collected ETH
-            collectedWei = collectedWei.add(_refundAmount);
+            LogOverflow(_buyer, _refundAmount);
         }
+
+        collectedWei = collectedWei.add(msg.value);
     }
 
     // It is an internal function that will call UAC ERC20 contract to issue the tokens
