@@ -168,7 +168,7 @@ contract ReservationContract is Ownable, ICOEngineInterface
     view
     returns(bool)
     {
-        return (icoBlockNumberStart != 0 && block.number >= icoBlockNumberStart);
+        return (icoBlockNumberStart != 0 && (block.number >= icoBlockNumberStart || ico.getTokensIcoSold() == ico.RC_TOKEN_LIMIT()));
     }
 
     // time stamp of the starting time of the ico, must return 0 if it depends on the block number
