@@ -58,7 +58,7 @@ Set addresses in contracts
 2. Set foundersTokenHolder in FoundersVesting
 3. Set ubiatarColdWallet and RCContractAddress in ICO
 4. Set ubiatarPlayTokenHolder in UbiatarPlay
-5. Set icoContractAddress and uacTokenAddress in ReservationContract
+5. Set uacTokenAddress in ReservationContract
 6. In ReservationContract set the same usdTokenPrice and UsdPerEthRate as the ICO contract
    then call getIcoBlockNumberStart() to get the ico block number start, then set the rcBlockNumberStart
    
