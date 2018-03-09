@@ -343,28 +343,27 @@ contract ICO is Ownable, ICOEngineInterface {
             bonusPercent = 8;
         }
 
-        uint newTokens = (msg.value * getUacTokensPerEth()).div(1 ether);
-
-        newTokens = newTokens.mul(bonusPercent.add(100)).div(100);
+        uint newTokens = (msg.value * getUacTokensPerEth(bonusPercent)).div(1 ether);
 
         if ((icoTokensSold.add(newTokens)) <= ICO_TOKEN_SUPPLY_LIMIT)
         {
             issueTokensInternal(_buyer, newTokens);
+
+            collectedWei = collectedWei.add(msg.value);
         }
         else
         {
             uint tokensBought = ICO_TOKEN_SUPPLY_LIMIT.sub(icoTokensSold);
-            uint tokensToBeRefund = tokensBought.mul(100).div(bonusPercent.add(100));
-            uint _refundAmount = msg.value.sub(((tokensToBeRefund).div(getUacTokensPerEth())).mul(1 ether));
+            uint _refundAmount = msg.value.sub((tokensBought.div(getUacTokensPerEth(bonusPercent))).mul(1 ether));
             require(_refundAmount < msg.value);
             refundAmount = _refundAmount;
             toBeRefund = _buyer;
             LogOverflow(_buyer, _refundAmount);
 
             issueTokensInternal(_buyer, tokensBought);
-        }
 
-        collectedWei = collectedWei.add(msg.value);
+            collectedWei = collectedWei.add(msg.value).sub(_refundAmount);
+        }
     }
 
     function buyTokensRC(address _buyer)
@@ -376,28 +375,27 @@ contract ICO is Ownable, ICOEngineInterface {
 
         uint bonusPercent = 10;
 
-        uint newTokens = (msg.value * getUacTokensPerEth()).div(1 ether);
-
-        newTokens = newTokens.mul(bonusPercent.add(100)).div(100);
+        uint newTokens = (msg.value * getUacTokensPerEth(bonusPercent)).div(1 ether);
 
         if ((icoTokensSold.add(newTokens)) <= RC_TOKEN_LIMIT)
         {
             issueTokensInternal(_buyer, newTokens);
+
+            collectedWei = collectedWei.add(msg.value);
         }
         else
         {
             uint tokensBought = RC_TOKEN_LIMIT.sub(icoTokensSold);
-            uint tokensToBeRefund = tokensBought.mul(100).div(bonusPercent.add(100));
-            uint _refundAmount = msg.value.sub((tokensToBeRefund.div(getUacTokensPerEth())).mul(1 ether));
+            uint _refundAmount = msg.value.sub((tokensBought.div(getUacTokensPerEth(bonusPercent))).mul(1 ether));
             require(_refundAmount < msg.value);
             refundAmountRC = _refundAmount;
             toBeRefundRC = _buyer;
             issueTokensInternal(_buyer, tokensBought);
 
             LogOverflow(_buyer, _refundAmount);
-        }
 
-        collectedWei = collectedWei.add(msg.value);
+            collectedWei = collectedWei.add(msg.value).sub(_refundAmount);
+        }
     }
 
     // It is an internal function that will call UAC ERC20 contract to issue the tokens
@@ -587,12 +585,13 @@ contract ICO is Ownable, ICOEngineInterface {
         return (currentState == State.ICOFinished || icoTokensSold >= ICO_TOKEN_SUPPLY_LIMIT);
     }
 
-    function getUacTokensPerEth()
+    function getUacTokensPerEth(uint bonusPercent)
     constant
     internal
     returns (uint)
     {
-        uint uacPerEth = (usdPerEth.mul(1 ether)).div(usdTokenPrice);
+        uint tokenPrice = (usdTokenPrice.mul(100).mul(1 ether)).div(bonusPercent.add(100));
+        uint uacPerEth = (usdPerEth.mul(1 ether).mul(1 ether)).div(tokenPrice);
         return uacPerEth;
     }
 
@@ -703,7 +702,7 @@ contract ICO is Ownable, ICOEngineInterface {
             bonusPercent = 8;
         }
 
-        return getUacTokensPerEth().mul(bonusPercent.add(100)).div(100);
+        return getUacTokensPerEth(bonusPercent);
     }
 
     // It allows to buy tokens for an other address than msg.sender

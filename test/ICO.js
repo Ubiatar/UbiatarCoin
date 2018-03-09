@@ -284,9 +284,9 @@ describe("ICO tests", () => {
         value: web3.toWei(1, "ether")
       }))
       .then(() => ico.icoTokensSold())
-      .then(t => assert.strictEqual(t.toString(), web3.toWei(594,"ether"), "should be 594 tokens"))
+      .then(t => assert.strictEqual(t.toString(), web3.toWei(594, "ether"), "should be 594 tokens"))
       .then(() => uac.balanceOf(buyer))
-      .then(b => assert.strictEqual(b.toString(), web3.toWei(594,"ether"), "should be 594 tokens"))
+      .then(b => assert.strictEqual(b.toString(), web3.toWei(594, "ether"), "should be 594 tokens"))
   })
 
   it("should buy tokens, pause the ico, resume the ico and buy tokens again", () => {
@@ -305,9 +305,9 @@ describe("ICO tests", () => {
         value: web3.toWei(1, "ether")
       }))
       .then(() => ico.icoTokensSold())
-      .then(t => assert.strictEqual(t.toString(10), web3.toWei(594,"ether"), "should be 594 tokens"))
+      .then(t => assert.strictEqual(t.toString(10), web3.toWei(594, "ether"), "should be 594 tokens"))
       .then(() => uac.balanceOf(buyer))
-      .then(b => assert.strictEqual(b.toString(10), web3.toWei(594,"ether"), "should be 594 tokens"))
+      .then(b => assert.strictEqual(b.toString(10), web3.toWei(594, "ether"), "should be 594 tokens"))
       .then(() => ico.pauseICO({from: owner}))
       .then(() => web3.eth.sendTransactionPromise({
         from: buyer,
@@ -315,9 +315,9 @@ describe("ICO tests", () => {
         value: web3.toWei(1, "ether")
       })).should.be.rejected
       .then(() => ico.icoTokensSold())
-      .then(t => assert.strictEqual(t.toString(10), web3.toWei(594,"ether"), "should be 594 tokens"))
+      .then(t => assert.strictEqual(t.toString(10), web3.toWei(594, "ether"), "should be 594 tokens"))
       .then(() => uac.balanceOf(buyer))
-      .then(b => assert.strictEqual(b.toString(10), web3.toWei(594,"ether"), "should be 594 tokens"))
+      .then(b => assert.strictEqual(b.toString(10), web3.toWei(594, "ether"), "should be 594 tokens"))
       .then(() => ico.resumeICO({from: owner}))
       .then(() => web3.eth.sendTransactionPromise({
         from: buyer,
@@ -325,9 +325,9 @@ describe("ICO tests", () => {
         value: web3.toWei(1, "ether")
       }))
       .then(() => ico.icoTokensSold())
-      .then(t => assert.strictEqual(t.toString(10), web3.toWei(1188,"ether"), "should be 1188 tokens"))
+      .then(t => assert.strictEqual(t.toString(10), web3.toWei(1188, "ether"), "should be 1188 tokens"))
       .then(() => uac.balanceOf(buyer))
-      .then(b => assert.strictEqual(b.toString(10), web3.toWei(1188,"ether"), "should be 1188 tokens"))
+      .then(b => assert.strictEqual(b.toString(10), web3.toWei(1188, "ether"), "should be 1188 tokens"))
   })
 
   it("should reject a transaction of less than 100 finney", () => {
@@ -349,7 +349,7 @@ describe("ICO tests", () => {
         value: web3.toWei(100, "finney")
       }))
       .then(() => ico.icoTokensSold())
-      .then(t => assert.strictEqual(t.toString(10), web3.toWei(59400 ,"finney"), "should be 59.4 tokens"))
+      .then(t => assert.strictEqual(t.toString(10), web3.toWei(59400, "finney"), "should be 59.4 tokens"))
   })
 
   it("should buy all tokens", () => {
@@ -401,8 +401,8 @@ describe("ICO tests", () => {
       .then(amount => assert.strictEqual(amount.toString(10), web3.toWei(0, "ether"), "should be 0 ether"))
       .then(() => ico.toBeRefund())
       .then(address => assert.strictEqual(address.toString(10), "0x0000000000000000000000000000000000000000", "should be null"))
-    //  .then(() => ico.getTotalCollectedWei())
-    //  .then(wei => assert.strictEqual(wei.toString(10), web3.toWei(1, "ether"), "should be 1 ether"))
+      .then(() => ico.getTotalCollectedWei())
+      .then(wei => assert.strictEqual(wei.toString(10), web3.toWei(1, "ether"), "should be 1 ether"))
   })
 
   it("should not be able to call the buyTokens() function", () => {
