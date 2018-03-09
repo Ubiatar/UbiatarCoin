@@ -93,15 +93,6 @@ contract UAC is StandardToken, Ownable
         Transfer(0x0, _who, _tokens);
     }
 
-    // It burns tokens updating total supply
-    function burnTokens(address _who, uint _tokens)
-    public
-    byIcoContract
-    {
-        balances[_who] = balances[_who].sub(_tokens);
-        totalSupply_ = totalSupply_.sub(_tokens);
-    }
-
     // It enables or disables token transfers
     function lockTransfer(bool _lock)
     public

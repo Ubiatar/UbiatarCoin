@@ -437,7 +437,7 @@ describe("RC ICOEngine tests", () => {
       .then(tokens => assert.strictEqual(tokens.toString(10), "0", "should be 0 remaining tokens"))
   })
 
-  it("remainingTokens - should return remaining tokens after buying 605 tokens", () => {
+  it("remainingTokens - should return remaining tokens after buying 550 tokens", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => web3.eth.getBlockNumberPromise())
       .then(number => ico.setBlockNumberStart(number + 20, {from: owner}))

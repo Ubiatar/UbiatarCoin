@@ -141,13 +141,12 @@ contract ReservationContract is Ownable, ICOEngineInterface
         return uacToken.balanceOf(investor);
     }
 
-    function getUacTokensPerEth(uint bonusPercent)
+    function getUacTokensPerEth()
     constant
     internal
     returns (uint)
     {
-        uint tokenPrice = (usdTokenPrice.mul(100)).div(bonusPercent.add(100));
-        uint uacPerEth = (usdPerEth.mul(1 ether)).div(tokenPrice);
+        uint uacPerEth = (usdPerEth.mul(1 ether)).div(usdTokenPrice);
         return uacPerEth;
     }
 
@@ -235,7 +234,8 @@ contract ReservationContract is Ownable, ICOEngineInterface
     returns(uint)
     {
         uint bonusPercent = 10;
-        return getUacTokensPerEth(bonusPercent);
+
+        return getUacTokensPerEth().mul(bonusPercent.add(100)).div(100);
     }
 
     // Payback function to partecipate to Reservation contract campaign
