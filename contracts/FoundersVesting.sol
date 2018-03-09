@@ -9,7 +9,8 @@ contract UACAC {
 }
 
 /*
-    FoundersVesting contract
+    This contract holds 12000000 founders UAC. They will be locked for 1 year and then will be gradually unlocked in the
+    next year.
 */
 contract FoundersVesting is Ownable
 {
@@ -48,6 +49,7 @@ contract FoundersVesting is Ownable
 
         uacToken = UACAC(_uacTokenAddress);
         uacTokenAddress = _uacTokenAddress;
+        // Amount of tokens to be sent in a single day
         balanceFraction = ((currentBalance.mul(1 ether)).div(360)).div(1 ether);
     }
 
@@ -106,16 +108,20 @@ contract FoundersVesting is Ownable
         icoFinished = true;
     }
 
-    // It allows Founders to withdraw its tokens
+    // It allows Founders to withdraw their tokens
     // It can withdraw a fraction of its total supply day by day until the end of 1 year
     function withdrawTokens()
     public
     onlyOwner
     onlyIcoFinished
     {
+        // Checks if we have already set the foundersTokenHolder wallet address
         require(foundersTokenHolder != 0x0);
         uint amountToSend = 0;
+
+        // Calculates the number of days passed from the last time tokens were withdrawn
         uint daysPassed = (uint(now).sub(lastWithdrawTime)).div(1 days);
+
         amountToSend = balanceFraction.mul(daysPassed);
         lastWithdrawTime = uint(now);
 

@@ -7,22 +7,32 @@ import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
     Eidoo ICO Engine interface
     This interface enables Eidoo wallet to query our ICO and display all the informations needed in the app
 */
-contract ICOEngineInterface{
-    function started() public view returns(bool);
-    function ended() public view returns(bool);
-    function startTime() public view returns(uint);
-    function endTime() public view returns(uint);
-    function startBlock() public view returns(uint);
-    function endBlock() public view returns(uint);
-    function totalTokens() public view returns(uint);
-    function remainingTokens() public view returns(uint);
-    function price() public view returns(uint);
+contract ICOEngineInterface {
+    function started() public view returns (bool);
+
+    function ended() public view returns (bool);
+
+    function startTime() public view returns (uint);
+
+    function endTime() public view returns (uint);
+
+    function startBlock() public view returns (uint);
+
+    function endBlock() public view returns (uint);
+
+    function totalTokens() public view returns (uint);
+
+    function remainingTokens() public view returns (uint);
+
+    function price() public view returns (uint);
 }
 
 // UbiatarCoin Abstract Contract
 contract UACAC {
     function lockTransfer(bool _lock) public;
+
     function issueTokens(address _who, uint _tokens) public;
+
     function balanceOf(address _owner) public constant returns (uint256);
 }
 
@@ -86,9 +96,9 @@ contract ICO is Ownable, ICOEngineInterface {
     address public toBeRefund = 0x0;
     // ICO refund amount in case of overflow on the last token purchase
     uint public refundAmount;
-
+    // Reservation contract participant to be refund in case of overflow on the last token purchase
     address public toBeRefundRC = 0x0;
-
+    // Reservation contract participant to be refund in case of overflow on the last token purchase
     uint public refundAmountRC = 0;
 
 
@@ -111,7 +121,7 @@ contract ICO is Ownable, ICOEngineInterface {
     address public advisorsWalletAddress = 0x0;
     // This is where Ethers will be transfered
     address public ubiatarColdWallet = 0x0;
-
+    // Reservation contract address
     address public RCContractAddress = 0x0;
 
     // UbiatarCoin contract reference
@@ -128,7 +138,6 @@ contract ICO is Ownable, ICOEngineInterface {
     {
         Init,
         ICORunning,
-        ICOPaused,
         ICOFinished
     }
 
@@ -172,6 +181,7 @@ contract ICO is Ownable, ICOEngineInterface {
         _;
     }
 
+    // Can only be called from the reservation contract
     modifier onlyFromRC()
     {
         require(msg.sender == RCContractAddress);
@@ -198,8 +208,6 @@ contract ICO is Ownable, ICOEngineInterface {
     event LogUsdPerEthRateSet(uint usdPerEth);
     event LogUsdTokenPrice(uint usdTokenPrice);
     event LogStartICO();
-    event LogPauseICO();
-    event LogResumeICO();
     event LogFinishICO();
 
     ///  Functions:
@@ -243,36 +251,21 @@ contract ICO is Ownable, ICOEngineInterface {
         LogStartICO();
     }
 
-    // It sets ICO in Pause state
-    function pauseICO()
-    public
-    onlyOwner
-    onlyInState(State.ICORunning)
-    {
-        setState(State.ICOPaused);
-        LogPauseICO();
-    }
-
-    // It resotres ICO in Running state
-    function resumeICO()
-    public
-    onlyOwner
-    onlyInState(State.ICOPaused)
-    {
-        setState(State.ICORunning);
-        LogResumeICO();
-    }
-
     // It allows to withdraw crowdsale Ether only when ICO is finished
     function withdraw(uint withdrawAmount)
     public
     onlyOwner
     onlyInState(State.ICOFinished)
     {
+        // Checks if the UbiatarColdWallet address has been set
         require(ubiatarColdWallet != 0x0);
-        if(withdrawAmount > this.balance) {
+
+        // If we're trying to withdraw more than the current contract's balance withdraws remaining ether
+        if (withdrawAmount > this.balance)
+        {
             withdrawAmount = this.balance;
         }
+
         ubiatarColdWallet.transfer(withdrawAmount);
         LogWithdraw(ubiatarColdWallet, withdrawAmount);
     }
@@ -296,13 +289,14 @@ contract ICO is Ownable, ICOEngineInterface {
             LogBurn(unsoldContractAddress, icoTokensUnsold);
         }
 
+        // Calls finish function in other contracts and sets their starting times for the withdraw functions
         preSaleVesting.finishIco();
         ubiatarPlay.finishIco();
         foundersVesting.finishIco();
         LogFinishICO();
     }
 
-    // It will refund last address just in case of overflow
+    // It will refunds last address in case of overflow
     function refund()
     public
     onlyOwner
@@ -324,37 +318,47 @@ contract ICO is Ownable, ICOEngineInterface {
     onlyBeforeIcoFinishTime
     onlyAfterBlockNumber
     {
+        // Checks that the investor has sent at least 0.1 ETH
         require(msg.value >= 100 finney);
 
         uint bonusPercent = 0;
-
-        if(block.number < icoBlockNumberStart + 10164)
+        // Gives 4% of discount for the first 42 hours of the ICO
+        if (block.number < icoBlockNumberStart.add(10164))
         {
             bonusPercent = 4;
         }
-
-        if(block.number < icoBlockNumberStart + 2541)
+        // Gives 6% of discount for the first 24 hours of the ICO
+        if (block.number < icoBlockNumberStart.add(2541))
         {
             bonusPercent = 6;
         }
-
-        if(block.number < icoBlockNumberStart + 635)
+        // Gives 8% of discount for the first 3 hours of the ICO
+        if (block.number < icoBlockNumberStart.add(635))
         {
             bonusPercent = 8;
         }
+        // Calculates the amount of tokens to be issued by multiplying the amount of ether sent by the number of tokens
+        // per ETH. We multiply and divide by 1 ETH to avoid approximation errors
+        uint newTokens = (msg.value.mul(getUacTokensPerEth(bonusPercent))).div(1 ether);
 
-        uint newTokens = (msg.value * getUacTokensPerEth(bonusPercent)).div(1 ether);
-
+        // Checks if there are enough tokens left to be issued, if not
         if ((icoTokensSold.add(newTokens)) <= ICO_TOKEN_SUPPLY_LIMIT)
         {
             issueTokensInternal(_buyer, newTokens);
 
             collectedWei = collectedWei.add(msg.value);
         }
+        // Refund function, calculates the amount of tokens still available and issues them to the investor, then calculates
+        // the amount of etther to be sent back
         else
         {
+            // Calculates the amount of token remaining in the ICO
             uint tokensBought = ICO_TOKEN_SUPPLY_LIMIT.sub(icoTokensSold);
+            // Calculates the amount of ETH to be sent back to the buyer depending on the amount of tokens still available
+            // at the moment of the purchase
             uint _refundAmount = msg.value.sub((tokensBought.div(getUacTokensPerEth(bonusPercent))).mul(1 ether));
+            // Checks if the refund amount is actually less than the ETH sent by the investor then saves the amount to
+            // be refund and the address which will receive the refund
             require(_refundAmount < msg.value);
             refundAmount = _refundAmount;
             toBeRefund = _buyer;
@@ -366,27 +370,40 @@ contract ICO is Ownable, ICOEngineInterface {
         }
     }
 
+    // Same as buyTokens, can only be called by the reservation contract and sets the bonus percent to 10%
     function buyTokensRC(address _buyer)
     public
     payable
     onlyFromRC
     {
+        // Checks that the investor has sent at least 0.1 ETH
         require(msg.value >= 100 finney);
+
 
         uint bonusPercent = 10;
 
-        uint newTokens = (msg.value * getUacTokensPerEth(bonusPercent)).div(1 ether);
+        // Calculates the amount of tokens to be issued by multiplying the amount of ether sent by the number of tokens
+        // per ETH. We multiply and divide by 1 ETH to avoid approximation errors
+        uint newTokens = (msg.value.mul(getUacTokensPerEth(bonusPercent))).div(1 ether);
 
+        // Checks if the amount of tokens to be sold is lower than the amount of tokens available to the reservation contract
         if ((icoTokensSold.add(newTokens)) <= RC_TOKEN_LIMIT)
         {
             issueTokensInternal(_buyer, newTokens);
 
             collectedWei = collectedWei.add(msg.value);
         }
+        // Refund function, calculates the amount of tokens still available and issues them to the investor, then calculates
+        // the amount of etther to be sent back
         else
         {
+            // Calculates the amount of token still available to the reservation contract
             uint tokensBought = RC_TOKEN_LIMIT.sub(icoTokensSold);
+            // Calculates the amount of ETH to be sent back to the buyer depending on the amount of tokens still available
+            // at the moment of the purchase
             uint _refundAmount = msg.value.sub((tokensBought.div(getUacTokensPerEth(bonusPercent))).mul(1 ether));
+            // Checks if the refund amount is actually less than the ETH sent by the investor then saves the amount to
+            // be refund and the address which will receive the refund
             require(_refundAmount < msg.value);
             refundAmountRC = _refundAmount;
             toBeRefundRC = _buyer;
@@ -416,7 +433,7 @@ contract ICO is Ownable, ICOEngineInterface {
     public
     onlyOwner
     {
-        ubiatarColdWallet =_ubiatarColdWallet;
+        ubiatarColdWallet = _ubiatarColdWallet;
         LogUbiatarColdWalletSet(ubiatarColdWallet);
     }
 
@@ -585,6 +602,8 @@ contract ICO is Ownable, ICOEngineInterface {
         return (currentState == State.ICOFinished || icoTokensSold >= ICO_TOKEN_SUPPLY_LIMIT);
     }
 
+    // Calculates the token price including the bonus percent received from the buyTokens function
+    // Returns the amount of UAC per 1 ETH to be given
     function getUacTokensPerEth(uint bonusPercent)
     constant
     internal
@@ -601,9 +620,9 @@ contract ICO is Ownable, ICOEngineInterface {
     function started()
     public
     view
-    returns(bool)
+    returns (bool)
     {
-        if((currentState == State.ICORunning || currentState == State.ICOFinished) && block.number >= icoBlockNumberStart)
+        if ((currentState == State.ICORunning || currentState == State.ICOFinished) && block.number >= icoBlockNumberStart)
         {
             return true;
         }
@@ -617,7 +636,7 @@ contract ICO is Ownable, ICOEngineInterface {
     function ended()
     public
     view
-    returns(bool)
+    returns (bool)
     {
         return ((uint(now) >= icoFinishTime) || (icoTokensSold == ICO_TOKEN_SUPPLY_LIMIT));
     }
@@ -626,7 +645,7 @@ contract ICO is Ownable, ICOEngineInterface {
     function startTime()
     public
     view
-    returns(uint)
+    returns (uint)
     {
         return 0;
     }
@@ -635,36 +654,36 @@ contract ICO is Ownable, ICOEngineInterface {
     function endTime()
     public
     view
-    returns(uint)
+    returns (uint)
     {
         return icoFinishTime;
     }
 
     // Optional function, can be implemented in place of startTime
     // Returns the starting block number of the ico, must return 0 if it depends on the time stamp
-     function startBlock()
-     public
-     view
-     returns(uint)
-     {
+    function startBlock()
+    public
+    view
+    returns (uint)
+    {
         return icoBlockNumberStart;
-     }
+    }
 
     // Optional function, can be implemented in place of endTime
     // Returns theending block number of the ico, must retrun 0 if it depends on the time stamp
-     function endBlock()
-     public
-     view
-     returns(uint)
-     {
+    function endBlock()
+    public
+    view
+    returns (uint)
+    {
         return 0;
-     }
+    }
 
     // returns the total number of the tokens available for the sale, must not change when the ico is started
     function totalTokens()
     public
     view
-    returns(uint)
+    returns (uint)
     {
         return ICO_TOKEN_SUPPLY_LIMIT;
     }
@@ -674,7 +693,7 @@ contract ICO is Ownable, ICOEngineInterface {
     function remainingTokens()
     public
     view
-    returns(uint)
+    returns (uint)
     {
         return ICO_TOKEN_SUPPLY_LIMIT.sub(icoTokensSold);
     }
@@ -683,21 +702,21 @@ contract ICO is Ownable, ICOEngineInterface {
     function price()
     public
     view
-    returns(uint)
+    returns (uint)
     {
         uint bonusPercent = 0;
 
-        if(block.number < icoBlockNumberStart + 10164)
+        if (block.number < icoBlockNumberStart.add(10164))
         {
             bonusPercent = 4;
         }
 
-        if(block.number < icoBlockNumberStart + 2541)
+        if (block.number < icoBlockNumberStart.add(2541))
         {
             bonusPercent = 6;
         }
 
-        if(block.number < icoBlockNumberStart + 635)
+        if (block.number < icoBlockNumberStart.add(635))
         {
             bonusPercent = 8;
         }

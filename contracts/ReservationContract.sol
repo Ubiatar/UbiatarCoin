@@ -37,7 +37,7 @@ contract UACAC
 
 /*
     Reservation contract
-    It will deliver an amount of token with a discount price a few hours before ICO begin
+    It will deliver an amount of tokens with a discount price a few hours before ICO begin
 */
 contract ReservationContract is Ownable, ICOEngineInterface
 {
@@ -141,6 +141,8 @@ contract ReservationContract is Ownable, ICOEngineInterface
         return uacToken.balanceOf(investor);
     }
 
+    // Calculates the token price including the bonus percent received from the buyTokens function
+    // Returns the amount of UAC per 1 ETH to be given
     function getUacTokensPerEth(uint bonusPercent)
     constant
     internal

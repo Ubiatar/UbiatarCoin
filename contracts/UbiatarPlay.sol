@@ -11,7 +11,7 @@ contract UACAC {
 /*
     UbiatarPlay contract wallet
     50.5% of UAC will be withdrawn here
-    Token will be withdraws in slices after 3-6-9-12-18-24 months
+    Tokens will be withdrawn in slices after 3-6-9-12-18-24 months
 */
 contract UbiatarPlay is Ownable{
 
@@ -39,7 +39,7 @@ contract UbiatarPlay is Ownable{
     // UbiatarPlay account UAC balance
     uint public currentBalance = 50500000 * 1 ether;
 
-    // Token withdrawnable per months
+    // Token withdrawable per months
     uint public withdrawMonths3 = 2000000 * 1 ether;
     uint public withdrawMonths6 = 4000000 * 1 ether;
     uint public withdrawMonths9 = 6000000 * 1 ether;

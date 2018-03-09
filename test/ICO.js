@@ -181,7 +181,7 @@ describe("ICO tests", () => {
       .then(uacTokensPerEth => assert.strictEqual(uacTokensPerEth.toString(10), "60000", "should be started"))
   })
 
-  it("should start ico, pause it and then start it again", () => {
+  /*it("should start ico, pause it and then start it again", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.isIcoRunning())
       .then(isIcoRunning => assert.strictEqual(isIcoRunning, false, "it should not be started yet"))
@@ -194,7 +194,7 @@ describe("ICO tests", () => {
       .then(() => ico.resumeICO({from: owner}))
       .then(() => ico.isIcoRunning())
       .then(isIcoRunning => assert.strictEqual(isIcoRunning, true, "it should be started again"))
-  })
+  })*/
 
   it("should not update token value", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
@@ -289,7 +289,7 @@ describe("ICO tests", () => {
       .then(b => assert.strictEqual(b.toString(), web3.toWei(594, "ether"), "should be 594 tokens"))
   })
 
-  it("should buy tokens, pause the ico, resume the ico and buy tokens again", () => {
+ /* it("should buy tokens, pause the ico, resume the ico and buy tokens again", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.isIcoRunning())
       .then(isIcoRunning => assert(!isIcoRunning, "it should not be started yet"))
@@ -328,7 +328,7 @@ describe("ICO tests", () => {
       .then(t => assert.strictEqual(t.toString(10), web3.toWei(1188, "ether"), "should be 1188 tokens"))
       .then(() => uac.balanceOf(buyer))
       .then(b => assert.strictEqual(b.toString(10), web3.toWei(1188, "ether"), "should be 1188 tokens"))
-  })
+  })*/
 
   it("should reject a transaction of less than 100 finney", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
@@ -669,7 +669,7 @@ describe("ICOEngineInterface tests", () => {
       .then(s => assert.strictEqual(s.toString(), "false", "should be false"))
   })
 
-  it("should not be ended if the ico is running or paused", () => {
+  /*it("should not be ended if the ico is running or paused", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
       .then(() => ico.startICO({from: owner}))
       .then(() => ico.ended())
@@ -677,7 +677,7 @@ describe("ICOEngineInterface tests", () => {
       .then(() => ico.pauseICO({from: owner}))
       .then(() => ico.ended())
       .then(s => assert.strictEqual(s.toString(), "false", "should be false"))
-  })
+  })*/
 
   it("should be ended if the ico is finished", () => {
     return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)

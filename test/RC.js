@@ -222,6 +222,48 @@ describe("RC tests", () => {
       .then(b => assert.strictEqual(b.toString(10), web3.toWei(7500000, "ether"), "should be 7500000 tokens"))
   })
 
+  it("should buy 605 tokens", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => web3.eth.getBlockNumberPromise())
+      .then(number => ico.setBlockNumberStart(number + 20, {from: owner}))
+      .then(() => mineBlock())
+      .then(() => reservationContract.getIcoBlockNumberStart({from: owner}))
+      .then(() => web3.eth.getBlockNumberPromise())
+      .then(number => reservationContract.setRCBlockNumberStart(number, {from: owner}))
+      .then(() => mineBlock())
+      .then(() => ico.setRcContractAddress(reservationContract.address, {from: owner}))
+      .then(() => web3.eth.sendTransactionPromise({
+        from: buyer,
+        to: reservationContract.address,
+        value: web3.toWei(1, "ether")
+      }))
+      .then(() => ico.icoTokensSold())
+      .then(t => (parseInt(t.toString(10))).should.be.closeTo(parseInt(web3.toWei(605, "ether"), 10), parseInt(web3.toWei(10, "wei"), 10)))
+      .then(() => uac.balanceOf(buyer))
+      .then(b => (parseInt(b.toString(10))).should.be.closeTo(parseInt(web3.toWei(605, "ether"), 10), parseInt(web3.toWei(10, "wei"), 10)))
+  })
+
+  it("should buy 1210 tokens", () => {
+    return ICODeploy(uac.address, uacUnsold.address, foundersVesting.address, preSaleVesting.address, ubiatarPlay.address, advisorsWallet)
+      .then(() => web3.eth.getBlockNumberPromise())
+      .then(number => ico.setBlockNumberStart(number + 20, {from: owner}))
+      .then(() => mineBlock())
+      .then(() => reservationContract.getIcoBlockNumberStart({from: owner}))
+      .then(() => web3.eth.getBlockNumberPromise())
+      .then(number => reservationContract.setRCBlockNumberStart(number, {from: owner}))
+      .then(() => mineBlock())
+      .then(() => ico.setRcContractAddress(reservationContract.address, {from: owner}))
+      .then(() => web3.eth.sendTransactionPromise({
+        from: buyer,
+        to: reservationContract.address,
+        value: web3.toWei(2, "ether")
+      }))
+      .then(() => ico.icoTokensSold())
+      .then(t => (parseInt(t.toString(10))).should.be.closeTo(parseInt(web3.toWei(1210, "ether"), 10), parseInt(web3.toWei(10, "wei"), 10)))
+      .then(() => uac.balanceOf(buyer))
+      .then(b => (parseInt(b.toString(10))).should.be.closeTo(parseInt(web3.toWei(1210, "ether"), 10), parseInt(web3.toWei(10, "wei"), 10)))
+  })
+
 })
 
 describe("RC ICOEngine tests", () => {

@@ -131,7 +131,7 @@ contract PreSaleVesting is Ownable
         _;
     }
 
-    // It is called by ICO contract when ICO owner fires finishICO on ICO contract itself
+    // It is called by ICO contract when ICO owner fires finishICO on ICO contract itself.
     function finishIco()
     public
     byIcoContract
@@ -160,7 +160,7 @@ contract PreSaleVesting is Ownable
     }
 
     // It is in charge to allow PreSale addresses to withdrawn pre-sold tokens during PreSale
-    // 1/3 of totale amount is unlocked after first threshold
+    // 1/3 of total amount is unlocked after first threshold
     // 2/3 are unlocked day by day for the next 90 days
     function withdrawTokens()
     public
@@ -169,7 +169,8 @@ contract PreSaleVesting is Ownable
         uint tempBalance = (investors[msg.sender].initialBalance.mul(1 ether)).div(3);
         uint amountToSend = 0;
 
-
+        // If the presale investor has never withdrawn before initialize its balance, last withdrawTime and sets
+        // firstWithdraw to 1
         if ((uint(now) >= firstThreshold) && (investors[msg.sender].firstWithdraw == 0)) {
             investors[msg.sender].balance = investors[msg.sender].initialBalance;
             investors[msg.sender].lastWithdrawTime = secondThreshold;
@@ -177,9 +178,11 @@ contract PreSaleVesting is Ownable
             amountToSend = tempBalance;
         }
 
+        // Calculates 2/3 of total balance that will be withdrawn in the next 180 days
         tempBalance = tempBalance.mul(2);
 
         if (uint(now) >= secondThreshold) {
+            // Calculates the amount of days passed from the last time the investor has withdrawn
             uint daysPassed = (uint(now).sub(investors[msg.sender].lastWithdrawTime)).div(1 days);
             amountToSend = amountToSend.add((tempBalance.div(180)).mul(daysPassed));
             investors[msg.sender].lastWithdrawTime = uint(now);
@@ -188,6 +191,7 @@ contract PreSaleVesting is Ownable
         require(amountToSend != 0);
         amountToSend = amountToSend.div(1 ether);
 
+        // If the investor balance is lower than the amountToSend, send all the remaining balance
         if (investors[msg.sender].balance < amountToSend) {
             amountToSend = investors[msg.sender].balance;
         }
@@ -208,7 +212,7 @@ contract PreSaleVesting is Ownable
         return investors[user].initialBalance;
     }
 
-    // It allows to get reclaimable tokens based on ICO and epoch time situation for a specif PreSale wallet
+    // It returns reclaimable tokens amount based on ICO and epoch time situation for a specif PreSale wallet
     function getReclaimableTokens(address user)
     constant
     public
@@ -258,7 +262,7 @@ contract PreSaleVesting is Ownable
         return getReclaimableTokens(user).add(getLockedTokens(user));
     }
 
-    // It allows to get locked tokens for a specific PreSale wallet
+    // It returns the amount of tokens still locked on a specific preSale wallet
     function getLockedTokens(address user)
     constant
     public
